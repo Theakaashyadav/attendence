@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Self Attendance</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, .22), transparent 35%),
+        linear-gradient(135deg, #eef3fb, #f8fbff);
+      padding: 30px;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .header {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2563eb, #0f172a);
+      color: white;
+      padding: 34px;
+      border-radius: 30px;
+      margin-bottom: 22px;
+      box-shadow: 0 25px 60px rgba(37, 99, 235, .30);
+    }
+
+    .header::after {
+      content: "";
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .10);
+      right: -55px;
+      top: -60px;
+    }
+
+    .header h1 {
+      position: relative;
+      font-size: 32px;
+      margin-bottom: 10px;
+      z-index: 1;
+    }
+
+    .header p {
+      position: relative;
+      color: #dbeafe;
+      line-height: 1.5;
+      z-index: 1;
+    }
+
+    .box {
+      background: rgba(255, 255, 255, .88);
+      backdrop-filter: blur(14px);
+      padding: 28px;
+      border-radius: 28px;
+      box-shadow: 0 25px 60px rgba(15, 23, 42, .12);
+      border: 1px solid rgba(255, 255, 255, .75);
+    }
+
+    .clock {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      color: #1d4ed8;
+      padding: 22px;
+      border-radius: 24px;
+      font-size: 34px;
+      font-weight: 900;
+      text-align: center;
+      margin-bottom: 14px;
+      letter-spacing: 1px;
+    }
+
+    #dateInput {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      text-align: center;
+      border: none;
+      box-shadow: inset 0 0 0 1px #e2e8f0;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid #cbd5e1;
+      font-size: 15px;
+      margin-bottom: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, .12);
+    }
+
+    .wifi-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 18px;
+      margin-bottom: 15px;
+      font-weight: 800;
+      line-height: 1.4;
+    }
+
+    .wifi-status::before {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .wifi-ok {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .wifi-ok::before {
+      content: "\f058";
+      background: #16a34a;
+      color: white;
+    }
+
+    .wifi-bad {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .wifi-bad::before {
+      content: "\f057";
+      background: #dc2626;
+      color: white;
+    }
+
+    #statusBox {
+      font-size: 16px;
+    }
+
+    #remarksInput {
+      background: white;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 18px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: .25s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .submit {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      box-shadow: 0 15px 35px rgba(37, 99, 235, .28);
+    }
+
+    .submit:disabled {
+      background: #94a3b8;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .success,
+    .error {
+      display: none;
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 18px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    @media(max-width:600px) {
+      body {
+        padding: 16px;
+        align-items: flex-start;
+      }
+
+      .header {
+        padding: 28px;
+        border-radius: 24px;
+      }
+
+      .header h1 {
+        font-size: 27px;
+      }
+
+      .box {
+        padding: 22px;
+      }
+
+      .clock {
+        font-size: 30px;
+      }
+    }
+
+    .employee-card {
+      display: block;
+      background: linear-gradient(135deg, #f8fafc, #eef6ff);
+      border: 1px solid #dbeafe;
+      padding: 18px;
+      border-radius: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+    }
+
+    .employee-card h3 {
+      margin-bottom: 10px;
+      font-size: 21px;
+      color: #0f172a;
+    }
+
+    .employee-card p {
+      color: #475569;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <div class="header">
+      <h1><i class="fa-solid fa-fingerprint"></i> Self Attendance</h1>
+      <p>Mark your attendance from office location.</p>
+    </div>
+
+    <div class="box">
+
+      <div class="clock" id="clock">00:00:00</div>
+
+      <input type="text" id="dateInput" readonly>
+
+       <div class="employee-card" id="employeeCard">
+        <h3 id="empName">Waiting for employee details...</h3>
+        <p><b>Employee ID:</b> <span id="empId">Detecting...</span></p>
+        <p><b>Department:</b> <span id="empDept">Detecting...</span></p>
+        <p><b>Designation:</b> <span id="empDesig">Detecting...</span></p>
+      </div>
+
+      <div id="wifiStatus" class="wifi-status wifi-bad">
+        Checking office radius...
+      </div>
+
+      <div id="statusBox" class="wifi-status wifi-ok">
+        Attendance Status: Ready
+      </div>
+
+     
+
+      <button class="btn submit" id="submitBtn" onclick="saveSelfAttendance()">
+        <i class="fa-solid fa-floppy-disk"></i> Mark My Attendance
+      </button>
+
+      <div class="success" id="successMsg">
+        <i class="fa-solid fa-circle-check"></i> Attendance marked successfully.
+      </div>
+
+      <div class="error" id="errorMsg"></div>
+
+    </div>
+
+  </div>
+
+  <script src="../google-sheet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
+
+ <script>
+const OFFICE_CONFIG = {
+  officeLat: 28.50281482302745,
+  officeLng: 77.41009481827919,
+  allowedRadiusMeter: 300,
+  maxGpsAccuracyMeter: 150
+};
+
+let isOfficeVerified = false;
+let verificationScore = 0;
+let selectedEmployee = null;
+let employeesList = [];
+let gpsInfo = {};
+let currentFingerprintId = "";
+
+function clearOldGPSLocalStorage() {
+  [
+    "gpsInfo",
+    "gpsLatitude",
+    "gpsLongitude",
+    "gpsAccuracy",
+    "officeDistanceMeter",
+    "lastGPSLocation",
+    "lastLatitude",
+    "lastLongitude",
+    "currentGPS",
+    "attendanceGPS"
+  ].forEach(key => localStorage.removeItem(key));
+
+  gpsInfo = {};
+  isOfficeVerified = false;
+  verificationScore = 0;
+}
+
+function normalizeValue(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+function getTodayISODate() {
+  const now = new Date();
+  return now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0");
+}
+
+function getDistanceMeter(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function verifyGPSLocation() {
+  clearOldGPSLocalStorage();
+
+  const statusBox = document.getElementById("wifiStatus");
+  statusBox.className = "wifi-status wifi-bad";
+  statusBox.innerHTML = "Checking office radius...";
+
+  return new Promise(resolve => {
+    if (!navigator.geolocation) {
+      isOfficeVerified = false;
+      statusBox.className = "wifi-status wifi-bad";
+      statusBox.innerHTML = "❌ Out of office radius";
+      resolve(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const accuracy = position.coords.accuracy || 9999;
+
+        const distance = getDistanceMeter(
+          lat,
+          lng,
+          OFFICE_CONFIG.officeLat,
+          OFFICE_CONFIG.officeLng
+        );
+
+        gpsInfo = {
+          latitude: lat,
+          longitude: lng,
+          accuracy: Math.round(accuracy),
+          distance: Math.round(distance)
+        };
+
+        const isInsideRadius = distance <= OFFICE_CONFIG.allowedRadiusMeter;
+        const isAccuracyAcceptable = accuracy <= OFFICE_CONFIG.maxGpsAccuracyMeter;
+
+        isOfficeVerified = isInsideRadius && isAccuracyAcceptable;
+        verificationScore = isOfficeVerified ? 100 : 0;
+
+        if (isOfficeVerified) {
+          statusBox.className = "wifi-status wifi-ok";
+          statusBox.innerHTML = "✅ In office radius";
+        } else {
+          statusBox.className = "wifi-status wifi-bad";
+          statusBox.innerHTML = "❌ Out of office radius";
+        }
+
+        resolve(isOfficeVerified);
+      },
+      () => {
+        isOfficeVerified = false;
+        verificationScore = 0;
+        gpsInfo = {};
+
+        statusBox.className = "wifi-status wifi-bad";
+        statusBox.innerHTML = "❌ Out of office radius";
+
+        resolve(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+      }
+    );
+  });
+}
+
+function getCurrentTime12() {
+  return new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+}
+
+function getClockTime12() {
+  return new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+}
+
+function getBackupDeviceId() {
+  let id = localStorage.getItem("backupDeviceId");
+
+  if (!id) {
+    id = "DEV-" + crypto.randomUUID();
+    localStorage.setItem("backupDeviceId", id);
+  }
+
+  return id;
+}
+
+async function getFingerprint() {
+  try {
+    if (typeof FingerprintJS !== "undefined") {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      currentFingerprintId = result.visitorId;
+    } else {
+      currentFingerprintId = getBackupDeviceId();
+    }
+  } catch {
+    currentFingerprintId = getBackupDeviceId();
+  }
+
+  return currentFingerprintId;
+}
+
+async function loadEmployees() {
+  const result = await getFromGoogleSheet("getEmployees");
+  employeesList = result.success && Array.isArray(result.data) ? result.data : [];
+}
+
+function findEmployeeByFingerprint() {
+  const currentFp = String(currentFingerprintId || "").trim();
+
+  return employeesList.find(emp =>
+    String(emp.registeredFingerprintId || "").trim() === currentFp
+  );
+}
+
+async function autoDetectEmployee() {
+  hideMessages();
+
+  await getFingerprint();
+  await loadEmployees();
+
+  selectedEmployee = findEmployeeByFingerprint();
+
+  if (!selectedEmployee) {
+    document.getElementById("empName").innerText = "Employee not detected";
+    document.getElementById("empId").innerText = "Not registered";
+    document.getElementById("empDept").innerText = "-";
+    document.getElementById("empDesig").innerText = "-";
+    showError("Device not registered.");
+    return false;
+  }
+
+  if (String(selectedEmployee.status || "").trim() !== "Active") {
+    showError("Employee inactive.");
+    return false;
+  }
+
+  document.getElementById("empName").innerText = selectedEmployee.fullName || "-";
+  document.getElementById("empId").innerText = selectedEmployee.employeeId || "-";
+  document.getElementById("empDept").innerText = selectedEmployee.department || "-";
+  document.getElementById("empDesig").innerText = selectedEmployee.designation || "-";
+
+  updateStatusBox();
+  return true;
+}
+
+async function getTodayAttendanceStatus(employeeId){
+  const today = getTodayISODate();
+
+  try{
+    const result = await getFromGoogleSheet("getAttendance");
+
+    if(!result.success || !Array.isArray(result.data)){
+      return "";
+    }
+
+    const myRow = result.data.find(row =>
+      String(row.employeeId || "").trim() === String(employeeId || "").trim()
+    );
+
+    if(!myRow){
+      return "";
+    }
+
+    return String(myRow[today] || "").trim();
+
+  }catch(error){
+    console.log(error);
+    return "";
+  }
+}
+
+function canMarkAttendanceForStatus(status){
+  const text = normalizeValue(status);
+
+  return (
+    !text ||
+    text === "pending leave" ||
+    text === "rejected leave"
+  );
+}
+
+function updateStatusBox(message, type){
+  const box = document.getElementById("statusBox");
+
+  if(message){
+    box.innerHTML = message;
+    box.className = type === "bad" ? "wifi-status wifi-bad" : "wifi-status wifi-ok";
+    return;
+  }
+
+  box.innerHTML = "Attendance Status: Ready";
+  box.className = "wifi-status wifi-ok";
+}
+
+async function saveSelfAttendance() {
+  hideMessages();
+
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+
+  const gpsVerified = await verifyGPSLocation();
+
+  if (!gpsVerified) {
+    showError("Out of office radius.");
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const detected = await autoDetectEmployee();
+
+  if (!detected || !selectedEmployee) {
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const existingStatus = await getTodayAttendanceStatus(selectedEmployee.employeeId);
+  const existingLower = normalizeValue(existingStatus);
+
+  if(existingLower === "leave"){
+    updateStatusBox("Attendance Status: You are on leave", "bad");
+    showError("You are on leave. Attendance cannot be marked.");
+    submitBtn.disabled = false;
+    return;
+  }
+
+  if(!canMarkAttendanceForStatus(existingStatus)){
+    updateStatusBox("Attendance Status: Already marked", "bad");
+    showError("Attendance already marked for today.");
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const today = getTodayISODate();
+  const attendanceTime = getCurrentTime12();
+
+  const record = {
+    employeeId: String(selectedEmployee.employeeId || "").trim(),
+    date: today,
+    time: attendanceTime,
+    gpsVerified: isOfficeVerified ? "Yes" : "No",
+    fingerprintId: String(currentFingerprintId || "").trim()
+  };
+
+  const result = await saveToGoogleSheet({
+    action: "saveAttendance",
+    records: [record]
+  });
+
+  if (result.success) {
+    document.getElementById("successMsg").innerHTML =
+      `<i class="fa-solid fa-circle-check"></i> Attendance marked at ${attendanceTime}.`;
+
+    document.getElementById("successMsg").style.display = "block";
+    updateStatusBox("Attendance Status: Marked", "ok");
+    submitBtn.disabled = true;
+  } else {
+    showError(result.message || "Attendance not saved.");
+    submitBtn.disabled = false;
+  }
+}
+
+function showError(message) {
+  const errorMsg = document.getElementById("errorMsg");
+  errorMsg.innerText = message;
+  errorMsg.style.display = message ? "block" : "none";
+}
+
+function hideMessages() {
+  document.getElementById("successMsg").style.display = "none";
+  document.getElementById("errorMsg").style.display = "none";
+}
+
+function updateClock() {
+  const now = new Date();
+
+  document.getElementById("clock").innerText = getClockTime12();
+
+  document.getElementById("dateInput").value = now.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+async function initPage() {
+  clearOldGPSLocalStorage();
+  updateClock();
+  await getFingerprint();
+  await verifyGPSLocation();
+
+  const detected = await autoDetectEmployee();
+
+  if(detected && selectedEmployee){
+    const existingStatus = await getTodayAttendanceStatus(selectedEmployee.employeeId);
+    const existingLower = normalizeValue(existingStatus);
+    const submitBtn = document.getElementById("submitBtn");
+
+    if(existingLower === "leave"){
+      updateStatusBox("Attendance Status: You are on leave", "bad");
+      submitBtn.disabled = true;
+    }else if(existingLower === "pending leave"){
+      updateStatusBox("Attendance Status: Pending Leave - Attendance Allowed", "ok");
+      submitBtn.disabled = false;
+    }else if(existingLower === "rejected leave"){
+      updateStatusBox("Attendance Status: Rejected Leave - Attendance Allowed", "ok");
+      submitBtn.disabled = false;
+    }else if(existingLower){
+      updateStatusBox("Attendance Status: Already marked", "bad");
+      submitBtn.disabled = true;
+    }else{
+      updateStatusBox("Attendance Status: Ready", "ok");
+      submitBtn.disabled = false;
+    }
+  }
+}
+
+setInterval(updateClock, 1000);
+
+setInterval(() => {
+  verifyGPSLocation();
+}, 60000);
+
+initPage();
+</script>
+
+</body>
+
+</html>

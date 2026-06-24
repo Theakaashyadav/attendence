@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leave Requests</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Arial,sans-serif}
+body{min-height:100vh;background:#eef3fb;padding:25px;color:#0f172a}
+.container{max-width:1200px;margin:auto}
+.header{background:linear-gradient(135deg,#2563eb,#0f172a);color:white;padding:32px;border-radius:26px;margin-bottom:24px}
+.header h1{font-size:32px;margin-bottom:8px}
+.header p{color:#dbeafe}
+.box{background:white;padding:24px;border-radius:24px;box-shadow:0 15px 35px rgba(15,23,42,.10);overflow-x:auto}
+
+.btn{
+  border:0;
+  padding:11px 15px;
+  border-radius:12px;
+  font-weight:900;
+  cursor:pointer;
+  color:white;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.refresh{background:#2563eb;margin-bottom:16px}
+.approve{background:#16a34a}
+.reject{background:#dc2626}
+.btn:disabled{background:#94a3b8;cursor:not-allowed}
+
+.btn.loading::after{
+  content:"";
+  width:15px;
+  height:15px;
+  border:3px solid rgba(255,255,255,.45);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+table{width:100%;border-collapse:collapse;min-width:900px}
+th,td{padding:14px;border-bottom:1px solid #e2e8f0;text-align:left}
+th{background:#f8fafc;color:#334155}
+.badge{padding:7px 11px;border-radius:999px;font-weight:900;font-size:12px}
+.pending{background:#ffedd5;color:#9a3412}
+.approved{background:#dcfce7;color:#166534}
+.rejected{background:#fee2e2;color:#991b1b}
+.locked{background:#e2e8f0;color:#475569}
+.error,.success{display:none;margin-bottom:15px;padding:14px;border-radius:15px;font-weight:800}
+.error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.action-wrap{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-calendar-check"></i> Leave Requests</h1>
+    <p>Approve or reject employee leave requests.</p>
+  </div>
+
+  <div class="box">
+
+    <button class="btn refresh" onclick="loadLeaveRequests(this)">
+      <i class="fa-solid fa-rotate"></i> Refresh Requests
+    </button>
+
+    <div id="successMsg" class="success"></div>
+    <div id="errorMsg" class="error"></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Name</th>
+          <th>Leave Dates</th>
+          <th>Total Days</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      <tbody id="leaveBody">
+        <tr>
+          <td colspan="6">Loading...</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+function normalizeStatus(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+function isLeaveStatus(value){
+  const text = normalizeStatus(value);
+
+  return (
+    text === "pending leave" ||
+    text === "leave" ||
+    text === "rejected leave"
+  );
+}
+
+function isPastDate(dateText){
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const date = new Date(dateText);
+  date.setHours(0,0,0,0);
+
+  return date < today;
+}
+
+function addOneDay(dateText){
+  const d = new Date(dateText);
+  d.setDate(d.getDate() + 1);
+
+  return d.getFullYear() + "-" +
+    String(d.getMonth() + 1).padStart(2,"0") + "-" +
+    String(d.getDate()).padStart(2,"0");
+}
+
+function getStatusBadge(value){
+  const text = String(value || "").trim();
+
+  if(text === "Leave"){
+    return `<span class="badge approved">Approved</span>`;
+  }
+
+  if(text === "Rejected Leave"){
+    return `<span class="badge rejected">Rejected</span>`;
+  }
+
+  return `<span class="badge pending">Pending</span>`;
+}
+
+function getDateRangeText(fromDate,toDate){
+  if(fromDate === toDate){
+    return fromDate;
+  }
+
+  return fromDate + " to " + toDate;
+}
+
+function groupContinuousRequests(flatRequests){
+  const grouped = [];
+
+  const sorted = flatRequests.sort((a,b) => {
+    const empCompare = a.employeeId.localeCompare(b.employeeId);
+    if(empCompare !== 0) return empCompare;
+
+    const statusCompare = a.status.localeCompare(b.status);
+    if(statusCompare !== 0) return statusCompare;
+
+    return a.date.localeCompare(b.date);
+  });
+
+  sorted.forEach(req => {
+    const last = grouped[grouped.length - 1];
+
+    if(
+      last &&
+      last.employeeId === req.employeeId &&
+      last.status === req.status &&
+      addOneDay(last.toDate) === req.date
+    ){
+      last.toDate = req.date;
+      last.dates.push(req.date);
+      last.totalDays++;
+    }else{
+      grouped.push({
+        employeeId: req.employeeId,
+        name: req.name,
+        fromDate: req.date,
+        toDate: req.date,
+        dates: [req.date],
+        totalDays: 1,
+        status: req.status
+      });
+    }
+  });
+
+  return grouped;
+}
+
+function setButtonLoading(button,isLoading){
+  if(!button) return;
+
+  button.disabled = isLoading;
+
+  if(isLoading){
+    button.dataset.oldHtml = button.innerHTML;
+    button.classList.add("loading");
+    button.innerHTML = "";
+  }else{
+    button.classList.remove("loading");
+    button.innerHTML = button.dataset.oldHtml || button.innerHTML;
+  }
+}
+
+async function loadLeaveRequests(button){
+  hideMessages();
+  setButtonLoading(button,true);
+
+  const tbody = document.getElementById("leaveBody");
+  tbody.innerHTML = `<tr><td colspan="6">Loading...</td></tr>`;
+
+  try{
+    const result = await getFromGoogleSheet("getAttendance");
+
+    if(!result.success || !Array.isArray(result.data)){
+      tbody.innerHTML = `<tr><td colspan="6">No leave requests found.</td></tr>`;
+      showError(result.message || "Unable to fetch attendance data.");
+      return;
+    }
+
+    const flatRequests = [];
+
+    result.data.forEach(row => {
+      const employeeId = String(row.employeeId || "").trim();
+      const name = String(row.name || "").trim();
+
+      Object.keys(row).forEach(key => {
+        if(/^\d{4}-\d{2}-\d{2}$/.test(key)){
+          const status = String(row[key] || "").trim();
+
+          if(isLeaveStatus(status)){
+            flatRequests.push({
+              employeeId,
+              name,
+              date: key,
+              status
+            });
+          }
+        }
+      });
+    });
+
+    const requests = groupContinuousRequests(flatRequests);
+
+    if(!requests.length){
+      tbody.innerHTML = `<tr><td colspan="6">No leave requests found.</td></tr>`;
+      return;
+    }
+
+    requests.sort((a,b) => a.fromDate.localeCompare(b.fromDate));
+
+    tbody.innerHTML = requests.map(req => {
+      const locked = req.dates.some(date => isPastDate(date));
+      const datesText = getDateRangeText(req.fromDate, req.toDate);
+
+      return `
+        <tr>
+          <td><b>${req.employeeId}</b></td>
+          <td>${req.name || "-"}</td>
+          <td>${datesText}</td>
+          <td>${req.totalDays}</td>
+          <td>${getStatusBadge(req.status)}</td>
+          <td>
+            ${
+              locked
+                ? `<span class="badge locked">Locked</span>`
+                : `
+                  <div class="action-wrap">
+                    <button class="btn approve" onclick="approveRequest(this,'${req.employeeId}','${req.fromDate}','${req.toDate}')">
+                      Approve
+                    </button>
+                    <button class="btn reject" onclick="rejectRequest(this,'${req.employeeId}','${req.fromDate}','${req.toDate}')">
+                      Reject
+                    </button>
+                  </div>
+                `
+            }
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  }catch(error){
+    console.log(error);
+    tbody.innerHTML = `<tr><td colspan="6">Failed to load leave requests.</td></tr>`;
+    showError("Failed to load leave requests.");
+  }finally{
+    setButtonLoading(button,false);
+  }
+}
+
+async function approveRequest(button,employeeId,fromDate,toDate){
+  await updateLeave(button,employeeId,fromDate,toDate,"approveLeave");
+}
+
+async function rejectRequest(button,employeeId,fromDate,toDate){
+  await updateLeave(button,employeeId,fromDate,toDate,"rejectLeave");
+}
+
+async function updateLeave(button,employeeId,fromDate,toDate,action){
+  hideMessages();
+  setButtonLoading(button,true);
+
+  try{
+    const result = await saveToGoogleSheet({
+      action: action,
+      employeeId: employeeId,
+      fromDate: fromDate,
+      toDate: toDate,
+      date: fromDate
+    });
+
+    if(result.success){
+      showSuccess(result.message || "Leave updated successfully.");
+      await loadLeaveRequests();
+    }else{
+      showError(result.message || "Leave update failed.");
+    }
+
+  }catch(error){
+    console.log(error);
+    showError("Request failed.");
+  }finally{
+    setButtonLoading(button,false);
+  }
+}
+
+function showSuccess(message){
+  const box = document.getElementById("successMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function showError(message){
+  const box = document.getElementById("errorMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function hideMessages(){
+  document.getElementById("successMsg").style.display = "none";
+  document.getElementById("errorMsg").style.display = "none";
+}
+
+loadLeaveRequests();
+</script>
+
+</body>
+</html>

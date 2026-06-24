@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Attendance</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Arial,sans-serif}
+
+body{
+  min-height:100vh;
+  background:#eef3fb;
+  padding:25px;
+  color:#0f172a;
+}
+
+.container{max-width:1100px;margin:auto}
+
+.header{
+  background:linear-gradient(135deg,#2563eb,#0f172a);
+  color:white;
+  padding:32px;
+  border-radius:26px;
+  margin-bottom:24px;
+  box-shadow:0 20px 45px rgba(37,99,235,.25);
+}
+
+.header h1{font-size:32px;margin-bottom:8px}
+.header p{color:#dbeafe}
+
+.summary-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:18px;
+  margin-bottom:24px;
+}
+
+.card{
+  background:white;
+  padding:22px;
+  border-radius:22px;
+  box-shadow:0 14px 35px rgba(15,23,42,.08);
+  border:1px solid #e2e8f0;
+}
+
+.card i{font-size:26px;margin-bottom:10px}
+.card h2{font-size:30px}
+.card p{color:#64748b;font-weight:800;margin-top:5px}
+
+.present-card i{color:#16a34a}
+.absent-card i{color:#dc2626}
+.leave-card i{color:#f97316}
+.weekoff-card i{color:#7c3aed}
+.percent-card i{color:#2563eb}
+
+.box{
+  background:white;
+  padding:22px;
+  border-radius:24px;
+  box-shadow:0 15px 35px rgba(15,23,42,.08);
+}
+
+.profile{
+  margin-bottom:18px;
+  padding:18px;
+  border-radius:18px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  line-height:1.8;
+  font-weight:700;
+}
+
+.btn{
+  border:0;
+  background:#2563eb;
+  color:white;
+  padding:13px 18px;
+  border-radius:14px;
+  font-weight:900;
+  cursor:pointer;
+  margin-bottom:15px;
+}
+
+.error{
+  display:none;
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+  padding:14px;
+  border-radius:15px;
+  font-weight:800;
+  margin-bottom:15px;
+}
+
+.calendar-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  flex-wrap:wrap;
+  margin-bottom:18px;
+}
+
+.calendar-head h2{font-size:24px}
+
+.legend{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.legend span{
+  padding:8px 12px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.legend-present{background:#dcfce7;color:#166534}
+.legend-absent{background:#fee2e2;color:#991b1b}
+.legend-leave{background:#ffedd5;color:#9a3412}
+.legend-rejected{background:#fce7f3;color:#9d174d}
+.legend-weekoff{background:#ede9fe;color:#5b21b6}
+.legend-empty{background:#f1f5f9;color:#475569}
+
+.week-row,
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:10px;
+}
+
+.week-row{margin-bottom:10px}
+
+.week-row div{
+  text-align:center;
+  font-weight:900;
+  color:#475569;
+  padding:10px;
+  background:#f8fafc;
+  border-radius:12px;
+}
+
+.day-card{
+  min-height:110px;
+  border-radius:18px;
+  padding:12px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  position:relative;
+}
+
+.day-card.empty{background:#f8fafc;opacity:.45}
+.day-number{font-size:18px;font-weight:900;margin-bottom:10px}
+
+.day-status{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  margin-bottom:8px;
+}
+
+.day-time{
+  font-size:13px;
+  font-weight:800;
+  color:#334155;
+}
+
+.present{background:#f0fdf4;border-color:#bbf7d0}
+.present .day-status{background:#16a34a;color:white}
+
+.absent{background:#fef2f2;border-color:#fecaca}
+.absent .day-status{background:#dc2626;color:white}
+
+.leave{background:#fff7ed;border-color:#fed7aa}
+.leave .day-status{background:#f97316;color:white}
+
+.leave-rejected{
+  background:#fdf2f8;
+  border-color:#f9a8d4;
+}
+
+.leave-rejected .day-status{
+  background:#db2777;
+  color:white;
+}
+
+.weekoff{background:#f5f3ff;border-color:#ddd6fe}
+.weekoff .day-status{background:#7c3aed;color:white}
+
+.no-data{background:#f8fafc}
+.no-data .day-status{background:#e2e8f0;color:#475569}
+
+@media(max-width:700px){
+  body{padding:14px}
+  .header{padding:25px}
+
+  .week-row,
+  .calendar-grid{gap:6px}
+
+  .week-row div{
+    font-size:12px;
+    padding:8px 4px;
+  }
+
+  .day-card{
+    min-height:92px;
+    padding:8px;
+    border-radius:14px;
+  }
+
+  .day-number{font-size:15px}
+
+  .day-status{
+    font-size:10px;
+    padding:5px 7px;
+  }
+
+  .day-time{font-size:11px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-calendar-check"></i> My Attendance</h1>
+    <p>View your attendance calendar, leave days, absent days and percentage.</p>
+  </div>
+
+  <div class="summary-grid">
+    <div class="card">
+      <i class="fa-solid fa-calendar-days"></i>
+      <h2 id="totalDays">0</h2>
+      <p>Total Days</p>
+    </div>
+
+    <div class="card present-card">
+      <i class="fa-solid fa-circle-check"></i>
+      <h2 id="presentDays">0</h2>
+      <p>Present</p>
+    </div>
+
+    <div class="card absent-card">
+      <i class="fa-solid fa-circle-xmark"></i>
+      <h2 id="absentDays">0</h2>
+      <p>Absent</p>
+    </div>
+
+    <div class="card leave-card">
+      <i class="fa-solid fa-calendar-minus"></i>
+      <h2 id="leaveDays">0</h2>
+      <p>Leave</p>
+    </div>
+
+    <div class="card weekoff-card">
+      <i class="fa-solid fa-calendar-week"></i>
+      <h2 id="weekOffDays">0</h2>
+      <p>Week Off</p>
+    </div>
+
+    <div class="card percent-card">
+      <i class="fa-solid fa-percent"></i>
+      <h2 id="attendancePercent">0%</h2>
+      <p>Attendance</p>
+    </div>
+  </div>
+
+  <div class="box">
+
+    <button class="btn" onclick="loadMyAttendance()">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+
+    <div id="errorMsg" class="error"></div>
+
+    <div class="profile">
+      <div><b>Name:</b> <span id="empName">-</span></div>
+      <div><b>Employee ID:</b> <span id="empId">-</span></div>
+      <div><b>Department:</b> <span id="empDept">-</span></div>
+      <div><b>Designation:</b> <span id="empDesig">-</span></div>
+    </div>
+
+    <div class="calendar-head">
+      <h2 id="calendarTitle">Attendance Calendar</h2>
+
+      <div class="legend">
+        <span class="legend-present">Present</span>
+        <span class="legend-absent">Absent</span>
+        <span class="legend-leave">Leave</span>
+        <span class="legend-rejected">Leave Rejected</span>
+        <span class="legend-weekoff">Week Off</span>
+        <span class="legend-empty">No Data</span>
+      </div>
+    </div>
+
+    <div class="week-row">
+      <div>Sun</div>
+      <div>Mon</div>
+      <div>Tue</div>
+      <div>Wed</div>
+      <div>Thu</div>
+      <div>Fri</div>
+      <div>Sat</div>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+let loggedInUser = null;
+
+function getLoggedInUser(){
+  try{
+    return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+  }catch{
+    return null;
+  }
+}
+
+function normalizeValue(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+function isLeaveValue(value){
+  return normalizeValue(value) === "leave";
+}
+
+function isPendingLeaveValue(value){
+  return normalizeValue(value) === "pending leave";
+}
+
+function isRejectedLeaveValue(value){
+  return normalizeValue(value) === "rejected leave";
+}
+
+function isWeekOffValue(value){
+  const text = normalizeValue(value);
+  return text === "week off" || text === "weekoff" || text === "weekly off";
+}
+
+function formatAttendanceTime(value){
+  if(!value) return "";
+
+  const text = String(value).trim();
+
+  if(isLeaveValue(text)) return "Leave";
+  if(isPendingLeaveValue(text)) return "Pending Leave";
+  if(isRejectedLeaveValue(text)) return "Leave Rejected";
+  if(isWeekOffValue(text)) return "Week Off";
+
+  if(/am|pm/i.test(text)){
+    return text.toUpperCase();
+  }
+
+  const date = new Date(text);
+
+  if(!isNaN(date.getTime())){
+    return date.toLocaleTimeString("en-IN",{
+      hour:"2-digit",
+      minute:"2-digit",
+      hour12:true
+    }).toUpperCase();
+  }
+
+  return text;
+}
+
+async function loadMyAttendance(){
+  hideError();
+
+  loggedInUser = getLoggedInUser();
+
+  if(!loggedInUser || !loggedInUser.employeeId){
+    showError("Please login first.");
+
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 1200);
+
+    return;
+  }
+
+  document.getElementById("empName").innerText = loggedInUser.fullName || "-";
+  document.getElementById("empId").innerText = loggedInUser.employeeId || "-";
+  document.getElementById("empDept").innerText = loggedInUser.department || "-";
+  document.getElementById("empDesig").innerText = loggedInUser.designation || "-";
+
+  try{
+    const result = await getFromGoogleSheet("getAttendance");
+
+    if(!result.success || !Array.isArray(result.data)){
+      showError(result.message || "Attendance data not found.");
+      renderCalendar({});
+      return;
+    }
+
+    const myRow = result.data.find(row =>
+      String(row.employeeId || "").trim() ===
+      String(loggedInUser.employeeId || "").trim()
+    );
+
+    if(!myRow){
+      showError("No attendance marked yet.");
+      renderCalendar({});
+      return;
+    }
+
+    renderCalendar(myRow);
+
+  }catch(error){
+    console.log(error);
+    showError("Failed to load attendance.");
+    renderCalendar({});
+  }
+}
+
+function renderCalendar(row){
+  const grid = document.getElementById("calendarGrid");
+  grid.innerHTML = "";
+
+  const dateKeys = Object.keys(row)
+    .filter(key => /^\d{4}-\d{2}-\d{2}$/.test(key))
+    .sort();
+
+  const today = new Date();
+  const year = dateKeys.length ? Number(dateKeys[0].slice(0,4)) : today.getFullYear();
+  const month = dateKeys.length ? Number(dateKeys[0].slice(5,7)) - 1 : today.getMonth();
+
+  const monthName = new Date(year, month, 1).toLocaleString("en-IN", {
+    month:"long",
+    year:"numeric"
+  });
+
+  document.getElementById("calendarTitle").innerText = monthName + " Attendance";
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+
+  let presentCount = 0;
+  let leaveCount = 0;
+  let weekOffCount = 0;
+  let absentCount = 0;
+  let totalCount = 0;
+
+  for(let i = 0; i < firstDay; i++){
+    const empty = document.createElement("div");
+    empty.className = "day-card empty";
+    grid.appendChild(empty);
+  }
+
+  for(let day = 1; day <= daysInMonth; day++){
+    const date = year + "-" +
+      String(month + 1).padStart(2,"0") + "-" +
+      String(day).padStart(2,"0");
+
+    const rawValue = String(row[date] || "").trim();
+
+    let status = "No Data";
+    let statusClass = "no-data";
+    let timeText = "";
+
+    const isPastOrToday = new Date(year, month, day) <= new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+
+    if(rawValue){
+      if(isLeaveValue(rawValue)){
+        totalCount++;
+        status = "Leave";
+        statusClass = "leave";
+        timeText = "Approved Leave";
+        leaveCount++;
+
+      }else if(isPendingLeaveValue(rawValue)){
+        totalCount++;
+        status = "Leave";
+        statusClass = "leave";
+        timeText = "Pending Leave";
+        leaveCount++;
+
+      }else if(isRejectedLeaveValue(rawValue)){
+        totalCount++;
+        status = "Leave Rejected";
+        statusClass = "leave-rejected";
+        timeText = "Leave Request Rejected";
+        absentCount++;
+
+      }else if(isWeekOffValue(rawValue)){
+        status = "Week Off";
+        statusClass = "weekoff";
+        timeText = "Weekly Off";
+        weekOffCount++;
+
+      }else{
+        totalCount++;
+        status = "Present";
+        statusClass = "present";
+        timeText = formatAttendanceTime(rawValue);
+        presentCount++;
+      }
+
+    }else if(isPastOrToday){
+      totalCount++;
+      status = "Absent";
+      statusClass = "absent";
+      timeText = "Not Marked";
+      absentCount++;
+    }
+
+    const card = document.createElement("div");
+    card.className = "day-card " + statusClass;
+
+    card.innerHTML = `
+      <div class="day-number">${day}</div>
+      <div class="day-status">${status}</div>
+      <div class="day-time">${timeText}</div>
+    `;
+
+    grid.appendChild(card);
+  }
+
+  updateSummary(presentCount, absentCount, leaveCount, weekOffCount, totalCount);
+}
+
+function updateSummary(present, absent, leave, weekOff, total){
+  const percent = total ? Math.round((present / total) * 100) : 0;
+
+  document.getElementById("totalDays").innerText = total;
+  document.getElementById("presentDays").innerText = present;
+  document.getElementById("absentDays").innerText = absent;
+  document.getElementById("leaveDays").innerText = leave;
+  document.getElementById("weekOffDays").innerText = weekOff;
+  document.getElementById("attendancePercent").innerText = percent + "%";
+}
+
+function showError(message){
+  const box = document.getElementById("errorMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function hideError(){
+  const box = document.getElementById("errorMsg");
+  box.innerText = "";
+  box.style.display = "none";
+}
+
+loadMyAttendance();
+</script>
+
+</body>
+</html>

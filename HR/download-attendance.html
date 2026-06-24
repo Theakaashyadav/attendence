@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download Attendance</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
+
+body{
+  background:#f4f8ff;
+  padding:30px;
+}
+
+.container{
+  max-width:1100px;
+  margin:auto;
+}
+
+.header{
+  background:linear-gradient(135deg,#f97316,#0f172a);
+  color:white;
+  padding:30px;
+  border-radius:25px;
+  margin-bottom:25px;
+}
+
+.header h1{
+  font-size:34px;
+}
+
+.header p{
+  margin-top:10px;
+  opacity:.85;
+}
+
+.box{
+  background:white;
+  padding:25px;
+  border-radius:22px;
+  box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+.filters{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:15px;
+  margin-bottom:25px;
+}
+
+input,select{
+  width:100%;
+  padding:15px;
+  border-radius:14px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+
+.buttons{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+  margin-bottom:25px;
+}
+
+button{
+  border:none;
+  padding:16px;
+  border-radius:15px;
+  color:white;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.pdf{background:#dc2626;}
+.excel{background:#16a34a;}
+.csv{background:#2563eb;}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  overflow:hidden;
+  border-radius:15px;
+}
+
+th,td{
+  padding:14px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+}
+
+th{
+  background:#f3f4f6;
+}
+
+.status{
+  padding:6px 12px;
+  border-radius:20px;
+  font-weight:700;
+  font-size:12px;
+}
+
+.present{background:#dcfce7;color:#166534;}
+.absent{background:#fee2e2;color:#991b1b;}
+.late{background:#fef3c7;color:#92400e;}
+.half{background:#ede9fe;color:#5b21b6;}
+
+@media(max-width:800px){
+  body{padding:18px;}
+
+  .filters,
+  .buttons{
+    grid-template-columns:1fr;
+  }
+
+  .header h1{
+    font-size:27px;
+  }
+
+  table{
+    display:block;
+    overflow-x:auto;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-file-arrow-down"></i> Download Attendance</h1>
+    <p>Download employee attendance report in PDF, Excel or CSV format.</p>
+  </div>
+
+  <div class="box">
+
+    <div class="filters">
+      <input type="date" id="fromDate">
+      <input type="date" id="toDate">
+
+      <select id="statusFilter">
+        <option value="">All Status</option>
+        <option>Present</option>
+        <option>Absent</option>
+        <option>Late</option>
+        <option>Half Day</option>
+      </select>
+    </div>
+
+    <div class="buttons">
+      <button class="pdf" onclick="downloadPDF()">
+        <i class="fa-solid fa-file-pdf"></i> Download PDF
+      </button>
+
+      <button class="excel" onclick="downloadExcel()">
+        <i class="fa-solid fa-file-excel"></i> Download Excel
+      </button>
+
+      <button class="csv" onclick="downloadCSV()">
+        <i class="fa-solid fa-file-csv"></i> Download CSV
+      </button>
+    </div>
+
+    <table id="attendanceTable">
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Name</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+
+      <tbody id="tableBody"></tbody>
+    </table>
+
+  </div>
+
+</div>
+
+<script>
+let attendanceData = JSON.parse(localStorage.getItem("attendance")) || [
+  {
+    employeeId:"EMP001",
+    name:"Rahul",
+    date:"2026-06-17",
+    time:"09:55 AM",
+    status:"Present",
+    remarks:"On time"
+  },
+  {
+    employeeId:"EMP002",
+    name:"Aman",
+    date:"2026-06-17",
+    time:"10:25 AM",
+    status:"Late",
+    remarks:"Traffic"
+  },
+  {
+    employeeId:"EMP003",
+    name:"Priya",
+    date:"2026-06-17",
+    time:"--",
+    status:"Absent",
+    remarks:"No information"
+  },
+  {
+    employeeId:"EMP004",
+    name:"Mohit",
+    date:"2026-06-17",
+    time:"01:30 PM",
+    status:"Half Day",
+    remarks:"Personal work"
+  }
+];
+
+function renderTable(){
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+
+  getFilteredData().forEach(row => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${row.employeeId}</td>
+        <td>${row.name}</td>
+        <td>${row.date}</td>
+        <td>${row.time}</td>
+        <td>
+          <span class="status ${getStatusClass(row.status)}">
+            ${row.status}
+          </span>
+        </td>
+        <td>${row.remarks}</td>
+      </tr>
+    `;
+  });
+}
+
+function getStatusClass(status){
+  if(status === "Present") return "present";
+  if(status === "Absent") return "absent";
+  if(status === "Late") return "late";
+  if(status === "Half Day") return "half";
+  return "";
+}
+
+function getFilteredData(){
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+  const status = document.getElementById("statusFilter").value;
+
+  return attendanceData.filter(item => {
+    let match = true;
+
+    if(fromDate && item.date < fromDate) match = false;
+    if(toDate && item.date > toDate) match = false;
+    if(status && item.status !== status) match = false;
+
+    return match;
+  });
+}
+
+function downloadCSV(){
+  const data = getFilteredData();
+
+  let csv = "Employee ID,Name,Date,Time,Status,Remarks\n";
+
+  data.forEach(row => {
+    csv += `${row.employeeId},${row.name},${row.date},${row.time},${row.status},${row.remarks}\n`;
+  });
+
+  downloadFile(csv, "attendance-report.csv", "text/csv");
+}
+
+function downloadExcel(){
+  const data = getFilteredData();
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+
+  XLSX.writeFile(workbook, "attendance-report.xlsx");
+}
+
+function downloadPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Attendance Report", 14, 20);
+
+  const data = getFilteredData().map(row => [
+    row.employeeId,
+    row.name,
+    row.date,
+    row.time,
+    row.status,
+    row.remarks
+  ]);
+
+  doc.autoTable({
+    head:[["Employee ID","Name","Date","Time","Status","Remarks"]],
+    body:data,
+    startY:30
+  });
+
+  doc.save("attendance-report.pdf");
+}
+
+function downloadFile(content, fileName, type){
+  const blob = new Blob([content], {type:type});
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("fromDate").addEventListener("change", renderTable);
+document.getElementById("toDate").addEventListener("change", renderTable);
+document.getElementById("statusFilter").addEventListener("change", renderTable);
+
+renderTable();
+</script>
+
+</body>
+</html>

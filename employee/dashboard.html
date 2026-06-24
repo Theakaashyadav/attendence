@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Employee Dashboard</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI", Arial, sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top left,rgba(37,99,235,.18),transparent 35%),
+    radial-gradient(circle at bottom right,rgba(22,163,74,.15),transparent 35%),
+    #eef3fb;
+  padding:30px;
+  color:#0f172a;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+.header{
+  background:linear-gradient(135deg,#2563eb,#0f172a);
+  color:white;
+  padding:36px;
+  border-radius:28px;
+  margin-bottom:28px;
+  box-shadow:0 25px 60px rgba(37,99,235,.25);
+}
+
+.header h1{
+  font-size:36px;
+}
+
+.header p{
+  margin-top:10px;
+  color:#dbeafe;
+  font-size:16px;
+}
+
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:22px;
+}
+
+.action-card{
+  position:relative;
+  overflow:hidden;
+  background:white;
+  padding:28px;
+  border-radius:26px;
+  min-height:190px;
+  box-shadow:0 18px 45px rgba(15,23,42,.10);
+  border:1px solid rgba(255,255,255,.8);
+  cursor:pointer;
+  transition:.25s;
+  text-decoration:none;
+  color:#0f172a;
+  display:block;
+}
+
+.action-card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 25px 60px rgba(15,23,42,.16);
+}
+
+.action-card::after{
+  content:"";
+  position:absolute;
+  width:150px;
+  height:150px;
+  border-radius:50%;
+  right:-55px;
+  top:-55px;
+  background:rgba(37,99,235,.10);
+}
+
+.icon-box{
+  width:58px;
+  height:58px;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#eff6ff;
+  color:#2563eb;
+  font-size:26px;
+  margin-bottom:22px;
+}
+
+.action-card h2{
+  font-size:22px;
+  margin-bottom:10px;
+}
+
+.action-card p{
+  color:#64748b;
+  line-height:1.5;
+  font-size:15px;
+}
+
+.green .icon-box{
+  background:#dcfce7;
+  color:#16a34a;
+}
+
+.orange .icon-box{
+  background:#ffedd5;
+  color:#f97316;
+}
+
+.purple .icon-box{
+  background:#ede9fe;
+  color:#7c3aed;
+}
+
+.red .icon-box{
+  background:#fee2e2;
+  color:#dc2626;
+}
+
+.dark .icon-box{
+  background:#e2e8f0;
+  color:#0f172a;
+}
+
+.badge{
+  position:absolute;
+  top:24px;
+  right:24px;
+  background:#f1f5f9;
+  color:#334155;
+  padding:7px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+}
+
+@media(max-width:600px){
+  body{
+    padding:16px;
+  }
+
+  .header{
+    padding:28px;
+    border-radius:24px;
+  }
+
+  .header h1{
+    font-size:28px;
+  }
+
+  .action-card{
+    min-height:165px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-user"></i> Employee Dashboard</h1>
+    <p>Select an option to manage your attendance, salary slip, leave and profile.</p>
+  </div>
+
+  <div class="dashboard-grid">
+
+    <a href="attendance.html" class="action-card green">
+      <span class="badge">Today</span>
+      <div class="icon-box">
+        <i class="fa-solid fa-fingerprint"></i>
+      </div>
+      <h2>Mark Attendance</h2>
+      <p>Mark your attendance using GPS location and registered browser verification.</p>
+    </a>
+
+    <!-- <a href="totalattendance.html" class="action-card">
+      <div class="icon-box">
+        <i class="fa-solid fa-calendar-check"></i>
+      </div>
+      <h2>Total Attendance</h2>
+      <p>View your monthly attendance, present days, late marks and half days.</p>
+    </a>
+
+    <a href="salary-slip.html" class="action-card purple">
+      <div class="icon-box">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+      </div>
+      <h2>Download Salary Slip</h2>
+      <p>Download your salary slip month-wise in a clean printable format.</p>
+    </a>
+
+    <a href="leave.html" class="action-card orange">
+      <div class="icon-box">
+        <i class="fa-solid fa-calendar-plus"></i>
+      </div>
+      <h2>Apply Leave</h2>
+      <p>Submit leave requests and check your leave approval status.</p>
+    </a>
+
+    <a href="leave-status.html" class="action-card red">
+      <div class="icon-box">
+        <i class="fa-solid fa-calendar-days"></i>
+      </div>
+      <h2>Leave Status</h2>
+      <p>Track pending, approved and rejected leave applications.</p>
+    </a> -->
+
+    <a href="profile.html" class="action-card dark">
+      <div class="icon-box">
+        <i class="fa-solid fa-id-card"></i>
+      </div>
+      <h2>My Profile</h2>
+      <p>View your employee ID, department, designation and registered browser status.</p>
+    </a>
+
+  </div>
+
+</div>
+
+</body>
+</html>

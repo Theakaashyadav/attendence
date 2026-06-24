@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Profile</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Arial,sans-serif}
+
+body{
+  min-height:100vh;
+  background:#eef3fb;
+  padding:25px;
+  color:#0f172a;
+}
+
+.container{max-width:900px;margin:auto}
+
+.header{
+  background:linear-gradient(135deg,#2563eb,#0f172a);
+  color:white;
+  padding:32px;
+  border-radius:26px;
+  margin-bottom:24px;
+  box-shadow:0 20px 45px rgba(37,99,235,.25);
+}
+
+.header h1{font-size:32px;margin-bottom:8px}
+.header p{color:#dbeafe}
+
+.profile-card{
+  background:white;
+  border-radius:28px;
+  padding:28px;
+  box-shadow:0 18px 45px rgba(15,23,42,.10);
+  border:1px solid #e2e8f0;
+}
+
+.profile-top{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding-bottom:22px;
+  border-bottom:1px solid #e2e8f0;
+  margin-bottom:22px;
+}
+
+.avatar{
+  width:78px;
+  height:78px;
+  border-radius:22px;
+  background:linear-gradient(135deg,#2563eb,#0f172a);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:34px;
+  flex-shrink:0;
+}
+
+.profile-top h2{
+  font-size:28px;
+  margin-bottom:6px;
+}
+
+.profile-top p{
+  color:#64748b;
+  font-weight:800;
+}
+
+.status{
+  display:inline-block;
+  margin-top:8px;
+  padding:7px 13px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:900;
+}
+
+.active{background:#dcfce7;color:#166534}
+.inactive{background:#fee2e2;color:#991b1b}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:16px;
+}
+
+.info-box{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:18px;
+  padding:16px;
+}
+
+.info-box label{
+  display:block;
+  color:#64748b;
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:7px;
+}
+
+.info-box div{
+  color:#0f172a;
+  font-size:16px;
+  font-weight:800;
+  word-break:break-word;
+}
+
+.btn{
+  margin-top:22px;
+  border:0;
+  background:#2563eb;
+  color:white;
+  padding:13px 18px;
+  border-radius:14px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.error{
+  display:none;
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+  padding:14px;
+  border-radius:15px;
+  font-weight:800;
+  margin-bottom:15px;
+}
+
+@media(max-width:600px){
+  body{padding:14px}
+  .header{padding:24px}
+  .header h1{font-size:27px}
+  .profile-card{padding:20px}
+  .profile-top{align-items:flex-start}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-user"></i> Employee Profile</h1>
+    <p>View your employee details.</p>
+  </div>
+
+  <div id="errorMsg" class="error"></div>
+
+  <div class="profile-card">
+
+    <div class="profile-top">
+      <div class="avatar">
+        <i class="fa-solid fa-user-tie"></i>
+      </div>
+
+      <div>
+        <h2 id="fullName">Loading...</h2>
+        <p id="designationText">-</p>
+        <span id="statusBadge" class="status inactive">Status</span>
+      </div>
+    </div>
+
+    <div class="info-grid">
+
+      <div class="info-box">
+        <label>Employee ID</label>
+        <div id="employeeId">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Phone</label>
+        <div id="phone">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Email</label>
+        <div id="email">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Date of Birth</label>
+        <div id="dob">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Gender</label>
+        <div id="gender">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Department</label>
+        <div id="department">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Designation</label>
+        <div id="designation">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Joining Date</label>
+        <div id="joiningDate">-</div>
+      </div>
+
+      <div class="info-box">
+        <label>Address</label>
+        <div id="address">-</div>
+      </div>
+
+    </div>
+
+    <button class="btn" onclick="logoutUser()">
+      <i class="fa-solid fa-right-from-bracket"></i> Logout
+    </button>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+function getLoggedInUser(){
+  try{
+    return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+  }catch{
+    return null;
+  }
+}
+
+function setText(id,value){
+  const element = document.getElementById(id);
+
+  if(element){
+    element.innerText = value || "-";
+  }
+}
+
+function showError(message){
+  const box = document.getElementById("errorMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function hideError(){
+  const box = document.getElementById("errorMsg");
+  box.innerText = "";
+  box.style.display = "none";
+}
+
+async function loadProfile(){
+  hideError();
+
+  const loggedUser = getLoggedInUser();
+
+  if(!loggedUser || !loggedUser.employeeId){
+    showError("Please login first.");
+
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    },1200);
+
+    return;
+  }
+
+  try{
+    const result = await getFromGoogleSheet(
+      "getEmployeeProfile&employeeId=" + encodeURIComponent(loggedUser.employeeId)
+    );
+
+    if(!result.success || !result.data){
+      showError(result.message || "Profile details not found.");
+      return;
+    }
+
+    const user = result.data;
+
+    setText("fullName", user.fullName);
+    setText("designationText", user.designation);
+    setText("employeeId", user.employeeId);
+    setText("phone", user.phone);
+    setText("email", user.email);
+    setText("dob", user.dob);
+    setText("gender", user.gender);
+    setText("department", user.department);
+    setText("designation", user.designation);
+    setText("joiningDate", user.joiningDate);
+    setText("address", user.address);
+
+    const statusBadge = document.getElementById("statusBadge");
+    const status = String(user.status || "Inactive").trim();
+
+    statusBadge.innerText = status || "Inactive";
+
+    if(status.toLowerCase() === "active"){
+      statusBadge.className = "status active";
+    }else{
+      statusBadge.className = "status inactive";
+    }
+
+  }catch(error){
+    console.log(error);
+    showError("Failed to load profile details.");
+  }
+}
+
+function logoutUser(){
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "../index.html";
+}
+
+loadProfile();
+</script>
+
+</body>
+</html>

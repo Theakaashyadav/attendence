@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>All Employees</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Arial, sans-serif;
+}
+
+body{
+  background:#f4f8ff;
+  padding:30px;
+}
+
+.container{
+  max-width:1200px;
+  margin:auto;
+}
+
+.header{
+  background:linear-gradient(135deg,#7c3aed,#0f172a);
+  color:white;
+  padding:30px;
+  border-radius:25px;
+  margin-bottom:25px;
+}
+
+.header h1{
+  font-size:34px;
+}
+
+.header p{
+  margin-top:10px;
+  opacity:.85;
+}
+
+.box{
+  background:white;
+  padding:25px;
+  border-radius:22px;
+  box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+.top-actions{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  margin-bottom:20px;
+  flex-wrap:wrap;
+}
+
+.search-box{
+  flex:1;
+  min-width:250px;
+  position:relative;
+}
+
+.search-box i{
+  position:absolute;
+  top:50%;
+  left:15px;
+  transform:translateY(-50%);
+  color:#6b7280;
+}
+
+.search-box input{
+  width:100%;
+  padding:15px 15px 15px 45px;
+  border-radius:14px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+
+.add-btn{
+  background:#16a34a;
+  color:white;
+  padding:15px 22px;
+  border-radius:14px;
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  font-weight:700;
+}
+
+.table-wrap{
+  width:100%;
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+
+th,td{
+  padding:14px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
+  font-size:14px;
+}
+
+th{
+  background:#f3f4f6;
+  color:#374151;
+}
+
+.status{
+  padding:6px 12px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.active{
+  background:#dcfce7;
+  color:#166534;
+}
+
+.inactive{
+  background:#fee2e2;
+  color:#991b1b;
+}
+
+.leave{
+  background:#fef3c7;
+  color:#92400e;
+}
+
+.action-btn{
+  border:none;
+  padding:9px 12px;
+  border-radius:10px;
+  cursor:pointer;
+  color:white;
+  margin-right:5px;
+}
+
+.edit{
+  background:#2563eb;
+}
+
+.delete{
+  background:#dc2626;
+}
+
+.empty{
+  text-align:center;
+  padding:30px;
+  color:#6b7280;
+  font-weight:700;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  z-index:999;
+}
+
+.modal-box{
+  background:white;
+  width:100%;
+  max-width:750px;
+  border-radius:22px;
+  padding:25px;
+  max-height:90vh;
+  overflow:auto;
+}
+
+.modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.close{
+  background:#dc2626;
+  color:white;
+  border:none;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  cursor:pointer;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.input-group{
+  margin-bottom:15px;
+}
+
+label{
+  display:block;
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+input,
+select,
+textarea{
+  width:100%;
+  padding:14px;
+  border-radius:13px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+
+textarea{
+  resize:none;
+  height:90px;
+}
+
+.full{
+  grid-column:1/-1;
+}
+
+.save-btn{
+  width:100%;
+  padding:16px;
+  background:#7c3aed;
+  color:white;
+  border:none;
+  border-radius:15px;
+  font-size:17px;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+@media(max-width:700px){
+  body{
+    padding:18px;
+  }
+
+  .header h1{
+    font-size:27px;
+  }
+
+  .grid{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-users"></i> All Employees</h1>
+    <p>View, update and delete employee records.</p>
+  </div>
+
+  <div class="box">
+
+    <div class="top-actions">
+      <div class="search-box">
+        <i class="fa-solid fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search employee by name, phone, department..." onkeyup="renderEmployees()">
+      </div>
+
+      <a href="add-employee.html" class="add-btn">
+        <i class="fa-solid fa-user-plus"></i> Add Employee
+      </a>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee ID</th>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Department</th>
+            <th>Designation</th>
+            <th>Joining Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody id="employeeTable"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="modal" id="editModal">
+
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h2>Edit Employee</h2>
+      <button class="close" onclick="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <input type="hidden" id="editIndex">
+
+    <div class="grid">
+
+      <div class="input-group">
+        <label>Employee ID</label>
+        <input type="text" id="editEmployeeId" readonly>
+      </div>
+
+      <div class="input-group">
+        <label>Full Name</label>
+        <input type="text" id="editFullName">
+      </div>
+
+      <div class="input-group">
+        <label>Phone Number</label>
+        <input type="tel" id="editPhone">
+      </div>
+
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="editEmail">
+      </div>
+
+      <div class="input-group">
+        <label>Department</label>
+        <select id="editDepartment">
+          <option>Sales</option>
+          <option>Marketing</option>
+          <option>HR</option>
+          <option>Accounts</option>
+          <option>Admin</option>
+          <option>IT</option>
+          <option>Operations</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Designation</label>
+        <input type="text" id="editDesignation">
+      </div>
+
+      <div class="input-group">
+        <label>Joining Date</label>
+        <input type="date" id="editJoiningDate">
+      </div>
+
+      <div class="input-group">
+        <label>Salary</label>
+        <input type="number" id="editSalary">
+      </div>
+
+      <div class="input-group">
+        <label>Work Shift</label>
+        <select id="editShift">
+          <option>Morning Shift</option>
+          <option>Evening Shift</option>
+          <option>Night Shift</option>
+          <option>Flexible Shift</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label>Status</label>
+        <select id="editStatus">
+          <option>Active</option>
+          <option>Inactive</option>
+          <option>On Leave</option>
+        </select>
+      </div>
+
+      <div class="input-group full">
+        <label>Address</label>
+        <textarea id="editAddress"></textarea>
+      </div>
+
+    </div>
+
+    <button class="save-btn" onclick="updateEmployee()">
+      <i class="fa-solid fa-floppy-disk"></i> Update Employee
+    </button>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+let employees = [];
+
+async function loadEmployees(){
+  try{
+    const result = await getFromGoogleSheet("getEmployees");
+
+    if(result.success && Array.isArray(result.data)){
+      employees = result.data;
+    }else{
+      employees = [];
+    }
+
+    renderEmployees();
+
+  }catch(error){
+    console.log(error);
+    alert("Employees loading failed");
+  }
+}
+
+function renderEmployees(){
+  const search = document.getElementById("searchInput").value.toLowerCase();
+  const table = document.getElementById("employeeTable");
+
+  const filtered = employees.filter(emp => {
+    return (
+      String(emp.employeeId || "").toLowerCase().includes(search) ||
+      String(emp.fullName || "").toLowerCase().includes(search) ||
+      String(emp.phone || "").toLowerCase().includes(search) ||
+      String(emp.department || "").toLowerCase().includes(search) ||
+      String(emp.designation || "").toLowerCase().includes(search) ||
+      String(emp.status || "").toLowerCase().includes(search)
+    );
+  });
+
+  if(filtered.length === 0){
+    table.innerHTML = `
+      <tr>
+        <td colspan="8" class="empty">No employees found</td>
+      </tr>
+    `;
+    return;
+  }
+
+  table.innerHTML = "";
+
+  filtered.forEach(emp => {
+    const realIndex = employees.findIndex(e => e.employeeId === emp.employeeId);
+
+    table.innerHTML += `
+      <tr>
+        <td>${emp.employeeId || "-"}</td>
+        <td>${emp.fullName || "-"}</td>
+        <td>${emp.phone || "-"}</td>
+        <td>${emp.department || "-"}</td>
+        <td>${emp.designation || "-"}</td>
+        <td>${emp.joiningDate || "-"}</td>
+        <td>
+          <span class="status ${getStatusClass(emp.status || "Active")}">
+            ${emp.status || "Active"}
+          </span>
+        </td>
+        <td>
+          <button class="action-btn edit" onclick="openEditModal(${realIndex})">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+
+          <button class="action-btn delete" onclick="deleteEmployee(${realIndex})">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function getStatusClass(status){
+  if(status === "Active") return "active";
+  if(status === "Inactive") return "inactive";
+  if(status === "On Leave") return "leave";
+  return "active";
+}
+
+function openEditModal(index){
+  const emp = employees[index];
+
+  document.getElementById("editIndex").value = index;
+  document.getElementById("editEmployeeId").value = emp.employeeId || "";
+  document.getElementById("editFullName").value = emp.fullName || "";
+  document.getElementById("editPhone").value = emp.phone || "";
+  document.getElementById("editEmail").value = emp.email || "";
+  document.getElementById("editDepartment").value = emp.department || "";
+  document.getElementById("editDesignation").value = emp.designation || "";
+  document.getElementById("editJoiningDate").value = emp.joiningDate || "";
+  document.getElementById("editSalary").value = emp.salary || "";
+  document.getElementById("editShift").value = emp.shift || "Morning Shift";
+  document.getElementById("editStatus").value = emp.status || "Active";
+  document.getElementById("editAddress").value = emp.address || "";
+
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeModal(){
+  document.getElementById("editModal").style.display = "none";
+}
+
+async function updateEmployee(){
+  const index = document.getElementById("editIndex").value;
+
+  const updatedEmployee = {
+    action: "updateEmployee",
+    employeeId: document.getElementById("editEmployeeId").value,
+    fullName: document.getElementById("editFullName").value,
+    phone: document.getElementById("editPhone").value,
+    email: document.getElementById("editEmail").value,
+    department: document.getElementById("editDepartment").value,
+    designation: document.getElementById("editDesignation").value,
+    joiningDate: document.getElementById("editJoiningDate").value,
+    salary: document.getElementById("editSalary").value,
+    shift: document.getElementById("editShift").value,
+    status: document.getElementById("editStatus").value,
+    address: document.getElementById("editAddress").value
+  };
+
+  try{
+    const result = await saveToGoogleSheet(updatedEmployee);
+
+    if(result.success){
+      employees[index] = {
+        ...employees[index],
+        ...updatedEmployee
+      };
+
+      closeModal();
+      renderEmployees();
+      alert("Employee updated successfully");
+    }else{
+      alert("Employee update failed");
+    }
+
+  }catch(error){
+    console.log(error);
+    alert("Google Sheet update failed");
+  }
+}
+
+async function deleteEmployee(index){
+  if(!confirm("Are you sure you want to delete this employee?")) return;
+
+  const employeeId = employees[index].employeeId;
+
+  try{
+    const result = await saveToGoogleSheet({
+      action: "deleteEmployee",
+      employeeId: employeeId
+    });
+
+    if(result.success){
+      employees.splice(index,1);
+      renderEmployees();
+      alert("Employee deleted successfully");
+    }else{
+      alert("Employee delete failed");
+    }
+
+  }catch(error){
+    console.log(error);
+    alert("Google Sheet delete failed");
+  }
+}
+
+loadEmployees();
+</script>
+
+</body>
+</html>

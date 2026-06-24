@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply Leave</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",Arial,sans-serif}
+body{min-height:100vh;background:#eef3fb;padding:25px;color:#0f172a}
+.container{max-width:650px;margin:auto}
+.header{background:linear-gradient(135deg,#f97316,#0f172a);color:white;padding:32px;border-radius:26px;margin-bottom:24px}
+.header h1{font-size:32px;margin-bottom:8px}
+.header p{color:#ffedd5}
+.box{background:white;padding:26px;border-radius:24px;box-shadow:0 15px 35px rgba(15,23,42,.10)}
+.profile{background:#f8fafc;border:1px solid #e2e8f0;padding:18px;border-radius:18px;margin-bottom:20px;line-height:1.8;font-weight:700}
+.date-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{display:block;font-weight:900;margin-bottom:8px;color:#334155}
+input,textarea{width:100%;padding:15px;border:1px solid #cbd5e1;border-radius:15px;margin-bottom:16px;font-size:15px;outline:none}
+textarea{min-height:110px;resize:none}
+input:focus,textarea:focus{border-color:#f97316;box-shadow:0 0 0 4px rgba(249,115,22,.12)}
+.btn{width:100%;border:0;background:#f97316;color:white;padding:16px;border-radius:16px;font-size:17px;font-weight:900;cursor:pointer}
+.btn:disabled{background:#94a3b8;cursor:not-allowed}
+.success,.error{display:none;margin-top:16px;padding:14px;border-radius:15px;font-weight:800}
+.success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+@media(max-width:600px){.date-grid{grid-template-columns:1fr}}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-calendar-plus"></i> Apply Leave</h1>
+    <p>Apply leave for current month or next month only.</p>
+  </div>
+
+  <div class="box">
+
+    <div class="profile">
+      <div><b>Name:</b> <span id="empName">-</span></div>
+      <div><b>Employee ID:</b> <span id="empId">-</span></div>
+      <div><b>Department:</b> <span id="empDept">-</span></div>
+      <div><b>Designation:</b> <span id="empDesig">-</span></div>
+    </div>
+
+    <div class="date-grid">
+      <div>
+        <label>Leave From</label>
+        <input type="date" id="leaveFromDate">
+      </div>
+
+      <div>
+        <label>Leave To</label>
+        <input type="date" id="leaveToDate">
+      </div>
+    </div>
+
+    <label>Reason</label>
+    <textarea id="leaveReason" placeholder="Enter leave reason"></textarea>
+
+    <button class="btn" id="submitBtn" onclick="applyLeave()">
+      <i class="fa-solid fa-paper-plane"></i> Submit Leave Request
+    </button>
+
+    <div id="successMsg" class="success"></div>
+    <div id="errorMsg" class="error"></div>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+let loggedInUser = null;
+
+function getLoggedInUser(){
+  try{
+    return JSON.parse(localStorage.getItem("loggedInUser") || "null");
+  }catch{
+    return null;
+  }
+}
+
+function formatISODate(date){
+  return date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2,"0") + "-" +
+    String(date.getDate()).padStart(2,"0");
+}
+
+function setLeaveDateLimit(){
+  const now = new Date();
+
+  const minDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const maxDate = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+  const minISO = formatISODate(minDate);
+  const maxISO = formatISODate(maxDate);
+
+  const fromInput = document.getElementById("leaveFromDate");
+  const toInput = document.getElementById("leaveToDate");
+
+  fromInput.min = minISO;
+  fromInput.max = maxISO;
+
+  toInput.min = minISO;
+  toInput.max = maxISO;
+
+  fromInput.addEventListener("change", () => {
+    toInput.min = fromInput.value || minISO;
+
+    if(toInput.value && toInput.value < fromInput.value){
+      toInput.value = fromInput.value;
+    }
+  });
+}
+
+function initPage(){
+  loggedInUser = getLoggedInUser();
+
+  if(!loggedInUser || !loggedInUser.employeeId){
+    showError("Please login first.");
+
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 1200);
+
+    return;
+  }
+
+  document.getElementById("empName").innerText = loggedInUser.fullName || "-";
+  document.getElementById("empId").innerText = loggedInUser.employeeId || "-";
+  document.getElementById("empDept").innerText = loggedInUser.department || "-";
+  document.getElementById("empDesig").innerText = loggedInUser.designation || "-";
+
+  setLeaveDateLimit();
+}
+
+async function applyLeave(){
+  hideMessages();
+
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+
+  const fromDate = document.getElementById("leaveFromDate").value.trim();
+  const toDate = document.getElementById("leaveToDate").value.trim();
+  const reason = document.getElementById("leaveReason").value.trim();
+
+  if(!fromDate){
+    showError("Please select leave from date.");
+    btn.disabled = false;
+    return;
+  }
+
+  if(!toDate){
+    showError("Please select leave to date.");
+    btn.disabled = false;
+    return;
+  }
+
+  if(toDate < fromDate){
+    showError("Leave to date cannot be before leave from date.");
+    btn.disabled = false;
+    return;
+  }
+
+  if(!reason){
+    showError("Please enter leave reason.");
+    btn.disabled = false;
+    return;
+  }
+
+  try{
+    const result = await saveToGoogleSheet({
+      action: "applyLeave",
+      employeeId: loggedInUser.employeeId,
+      fromDate: fromDate,
+      toDate: toDate,
+      reason: reason
+    });
+
+    if(result.success){
+      showSuccess(result.message || "Leave request submitted. Status: Pending Leave");
+      document.getElementById("leaveFromDate").value = "";
+      document.getElementById("leaveToDate").value = "";
+      document.getElementById("leaveReason").value = "";
+      btn.disabled = false;
+    }else{
+      showError(result.message || "Leave request not submitted.");
+      btn.disabled = false;
+    }
+
+  }catch(error){
+    console.log(error);
+    showError("Request failed.");
+    btn.disabled = false;
+  }
+}
+
+function showSuccess(message){
+  const box = document.getElementById("successMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function showError(message){
+  const box = document.getElementById("errorMsg");
+  box.innerText = message;
+  box.style.display = "block";
+}
+
+function hideMessages(){
+  document.getElementById("successMsg").style.display = "none";
+  document.getElementById("errorMsg").style.display = "none";
+}
+
+initPage();
+</script>
+
+</body>
+</html>

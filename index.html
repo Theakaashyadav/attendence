@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Employee Auth</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at top left,rgba(37,99,235,.12),transparent 35%),
+    radial-gradient(circle at bottom right,rgba(14,165,233,.12),transparent 35%),
+    #f4f8ff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:25px;
+}
+
+.auth-box{
+  width:100%;
+  max-width:460px;
+  background:#ffffff;
+  border-radius:28px;
+  padding:32px;
+  border:1px solid #e2e8f0;
+  box-shadow:0 20px 50px rgba(15,23,42,.10);
+}
+
+.logo{
+  text-align:center;
+  margin-bottom:25px;
+}
+
+.logo i{
+  font-size:42px;
+  color:#2563eb;
+  background:#eff6ff;
+  width:82px;
+  height:82px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+}
+
+.logo h2{
+  margin-top:12px;
+  color:#0f172a;
+  font-size:28px;
+}
+
+.tabs{
+  display:flex;
+  background:#f1f5f9;
+  border-radius:16px;
+  padding:6px;
+  margin-bottom:25px;
+  border:1px solid #e2e8f0;
+}
+
+.tabs button{
+  flex:1;
+  border:0;
+  padding:13px;
+  border-radius:13px;
+  font-weight:800;
+  cursor:pointer;
+  background:transparent;
+  color:#64748b;
+}
+
+.tabs button.active{
+  background:#ffffff;
+  color:#2563eb;
+  box-shadow:0 8px 20px rgba(15,23,42,.10);
+}
+
+.form{
+  display:none;
+}
+
+.form.active{
+  display:block;
+}
+
+.input-group{
+  margin-bottom:16px;
+}
+
+.input-group label{
+  display:block;
+  font-weight:800;
+  margin-bottom:7px;
+  color:#334155;
+}
+
+.input-group input{
+  width:100%;
+  padding:15px;
+  border:1px solid #dbe3f0;
+  border-radius:15px;
+  outline:none;
+  font-size:15px;
+  background:#f8fafc;
+  color:#0f172a;
+}
+
+.input-group input:focus{
+  border-color:#2563eb;
+  background:#ffffff;
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+.pin-box{
+  display:flex;
+  gap:10px;
+  margin-top:8px;
+  margin-bottom:18px;
+}
+
+.pin-box input{
+  width:100%;
+  height:54px;
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+  border:1px solid #dbe3f0;
+  border-radius:15px;
+  outline:none;
+  background:#f8fafc;
+  color:#0f172a;
+}
+
+.pin-box input:focus{
+  border-color:#2563eb;
+  background:#ffffff;
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+.register-card{
+  padding:28px;
+  text-align:center;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:20px;
+  margin-bottom:20px;
+}
+
+.register-card i{
+  font-size:44px;
+  color:#2563eb;
+  background:#eff6ff;
+  width:78px;
+  height:78px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  margin-bottom:15px;
+}
+
+.register-card h3{
+  color:#0f172a;
+  font-size:22px;
+}
+
+.register-card p{
+  margin-top:10px;
+  color:#64748b;
+  line-height:1.6;
+  font-weight:600;
+}
+
+.btn{
+  width:100%;
+  border:0;
+  padding:15px;
+  border-radius:16px;
+  background:#2563eb;
+  color:white;
+  font-size:16px;
+  font-weight:900;
+  cursor:pointer;
+  margin-top:8px;
+  box-shadow:0 12px 25px rgba(37,99,235,.25);
+}
+
+.btn:hover{
+  background:#1d4ed8;
+}
+
+.msg{
+  margin-top:15px;
+  padding:12px;
+  border-radius:13px;
+  display:none;
+  font-weight:700;
+}
+
+.success{
+  background:#ecfdf5;
+  color:#047857;
+  border:1px solid #bbf7d0;
+}
+
+.error{
+  background:#fef2f2;
+  color:#b91c1c;
+  border:1px solid #fecaca;
+}
+</style>
+</head>
+
+<body>
+
+<div class="auth-box">
+
+  <div class="logo">
+    <i class="fa-solid fa-mobile-screen-button"></i>
+    <h2>Employee Login</h2>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('login')">Login</button>
+    <button class="tab-btn" onclick="showTab('register')">Register</button>
+  </div>
+
+  <form id="loginForm" class="form active">
+    <div class="input-group">
+      <label>Phone Number</label>
+      <input type="tel" id="loginPhone" maxlength="10" placeholder="Enter phone number" required>
+    </div>
+
+    <label><b>Enter 6 Digit PIN</b></label>
+    <div class="pin-box login-pin">
+      <input maxlength="1" type="password">
+      <input maxlength="1" type="password">
+      <input maxlength="1" type="password">
+      <input maxlength="1" type="password">
+      <input maxlength="1" type="password">
+      <input maxlength="1" type="password">
+    </div>
+
+    <button class="btn">Login</button>
+  </form>
+
+  <form id="registerForm" class="form">
+    <div class="register-card">
+      <i class="fa-solid fa-user-plus"></i>
+      <h3>Create New Employee</h3>
+      <p>Continue to employee registration page to add complete employee details.</p>
+    </div>
+
+    <button type="button" class="btn" onclick="window.location.href='employee/register.html'">
+      Register Employee
+    </button>
+  </form>
+
+  <div id="message" class="msg"></div>
+
+</div>
+<script src="google-sheet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@4/dist/fp.min.js"></script>
+
+<script>
+let currentFingerprintId = "";
+
+function getBackupDeviceId() {
+  let id = localStorage.getItem("backupDeviceId");
+
+  if (!id) {
+    id = "DEV-" + crypto.randomUUID();
+    localStorage.setItem("backupDeviceId", id);
+  }
+
+  return id;
+}
+
+async function getFingerprint() {
+  try {
+    if (typeof FingerprintJS !== "undefined") {
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      currentFingerprintId = result.visitorId;
+    } else {
+      currentFingerprintId = getBackupDeviceId();
+    }
+  } catch (error) {
+    currentFingerprintId = getBackupDeviceId();
+  }
+
+  return currentFingerprintId;
+}
+
+function showTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+  document.querySelectorAll(".form").forEach(form => form.classList.remove("active"));
+
+  if (tab === "login") {
+    document.querySelectorAll(".tab-btn")[0].classList.add("active");
+    document.getElementById("loginForm").classList.add("active");
+  } else {
+    document.querySelectorAll(".tab-btn")[1].classList.add("active");
+    document.getElementById("registerForm").classList.add("active");
+  }
+
+  hideMessage();
+}
+
+function showMessage(text, type) {
+  const msg = document.getElementById("message");
+  msg.innerText = text;
+  msg.className = "msg " + type;
+  msg.style.display = "block";
+}
+
+function hideMessage() {
+  const msg = document.getElementById("message");
+  msg.innerText = "";
+  msg.style.display = "none";
+}
+
+function setupPinInputs(selector) {
+  const inputs = document.querySelectorAll(selector + " input");
+
+  inputs.forEach((input, index) => {
+    input.addEventListener("input", () => {
+      input.value = input.value.replace(/[^0-9]/g, "");
+
+      if (input.value && index < inputs.length - 1) {
+        inputs[index + 1].focus();
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !input.value && index > 0) {
+        inputs[index - 1].focus();
+      }
+    });
+
+    input.addEventListener("paste", (e) => {
+      e.preventDefault();
+
+      const pasted = (e.clipboardData || window.clipboardData)
+        .getData("text")
+        .replace(/[^0-9]/g, "")
+        .slice(0, 6);
+
+      pasted.split("").forEach((digit, i) => {
+        if (inputs[i]) {
+          inputs[i].value = digit;
+        }
+      });
+
+      if (inputs[pasted.length - 1]) {
+        inputs[pasted.length - 1].focus();
+      }
+    });
+  });
+}
+
+function getPin(selector) {
+  let pin = "";
+
+  document.querySelectorAll(selector + " input").forEach(input => {
+    pin += input.value;
+  });
+
+  return pin;
+}
+
+function resetLoginButton() {
+  const btn = document.querySelector("#loginForm .btn");
+  btn.disabled = false;
+  btn.innerText = "Login";
+}
+
+setupPinInputs(".login-pin");
+
+document.getElementById("loginForm").addEventListener("submit", async function(e) {
+  e.preventDefault();
+  hideMessage();
+
+  const phone = document.getElementById("loginPhone").value.trim();
+  const pin = getPin(".login-pin");
+
+  if (!/^[0-9]{10}$/.test(phone)) {
+    showMessage("Phone number does not match. Please enter a valid 10 digit phone number.", "error");
+    return;
+  }
+
+  if (!/^[0-9]{6}$/.test(pin)) {
+    showMessage("PIN does not match. Please enter a valid 6 digit PIN.", "error");
+    return;
+  }
+
+  const btn = document.querySelector("#loginForm .btn");
+  btn.disabled = true;
+  btn.innerText = "Checking device...";
+
+  try {
+    const fingerprintId = await getFingerprint();
+
+    if (!fingerprintId) {
+      showMessage("Device fingerprint does not match. Device verification failed.", "error");
+      resetLoginButton();
+      return;
+    }
+
+    btn.innerText = "Checking phone, PIN and device...";
+
+    const result = await saveToGoogleSheet({
+      action: "loginEmployee",
+      phone: phone,
+      pin: pin,
+      fingerprintId: fingerprintId
+    });
+
+    if (!result.success) {
+      showMessage(result.message || "Phone, PIN or device fingerprint does not match.", "error");
+      resetLoginButton();
+      return;
+    }
+
+    localStorage.setItem("loggedInUser", JSON.stringify(result.employee));
+
+    showMessage("Login successful. Redirecting...", "success");
+
+    setTimeout(() => {
+      window.location.href = "employee/dashboard.html";
+    }, 1000);
+
+  } catch (error) {
+    console.log(error);
+    showMessage("Login request failed. Please check internet or server connection.", "error");
+    resetLoginButton();
+  }
+});
+</script>
+
+</body>
+</html>

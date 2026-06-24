@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Reports</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+
+body{background:#f4f8ff;padding:30px;color:#0f172a}
+.container{max-width:1400px;margin:auto}
+
+.header{
+  background:linear-gradient(135deg,#0891b2,#0f172a);
+  color:white;
+  padding:30px;
+  border-radius:25px;
+  margin-bottom:25px;
+}
+
+.header h1{font-size:34px}
+.header p{margin-top:10px;opacity:.85}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:18px;
+  margin-bottom:25px;
+}
+
+.card{
+  background:white;
+  padding:22px;
+  border-radius:22px;
+  box-shadow:0 15px 35px rgba(0,0,0,.08);
+}
+
+.card i{font-size:28px;margin-bottom:12px}
+.card h2{font-size:30px;margin-bottom:6px}
+.card p{color:#6b7280;font-weight:700}
+
+.total-icon{color:#2563eb}
+.present-icon{color:#16a34a}
+.absent-icon{color:#dc2626}
+.leave-icon{color:#f97316}
+
+.box{
+  background:white;
+  padding:25px;
+  border-radius:22px;
+  box-shadow:0 15px 40px rgba(0,0,0,.08);
+}
+
+.filters{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr auto auto auto;
+  gap:14px;
+  margin-bottom:20px;
+  align-items:end;
+}
+
+.field label{
+  display:block;
+  font-size:13px;
+  font-weight:900;
+  color:#475569;
+  margin-bottom:7px;
+}
+
+input,select,.btn{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+
+.btn{
+  border:0;
+  background:#0891b2;
+  color:white;
+  font-weight:900;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.download{background:#16a34a}
+
+.note{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  padding:12px 14px;
+  border-radius:14px;
+  margin-bottom:18px;
+  color:#475569;
+  font-weight:800;
+  font-size:13px;
+}
+
+.table-wrap{
+  overflow:auto;
+  max-height:70vh;
+  border:1px solid #e5e7eb;
+  border-radius:18px;
+}
+
+table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:1200px;
+}
+
+th,td{
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  border-right:1px solid #e5e7eb;
+  text-align:center;
+  font-size:13px;
+  vertical-align:middle;
+}
+
+th{
+  background:#f3f4f6;
+  position:sticky;
+  top:0;
+  z-index:5;
+  font-weight:900;
+}
+
+.fixed-col{
+  position:sticky;
+  left:0;
+  background:white;
+  z-index:4;
+  text-align:left;
+  min-width:230px;
+}
+
+th.fixed-col{
+  background:#f3f4f6;
+  z-index:8;
+}
+
+.emp-name{font-weight:900;color:#0f172a}
+.emp-meta{font-size:11px;color:#64748b;margin-top:4px}
+
+.emp-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:5px;
+  margin-top:8px;
+}
+
+.emp-summary span{
+  padding:5px;
+  border-radius:8px;
+  font-size:10px;
+  font-weight:900;
+  text-align:center;
+}
+
+.sum-present{background:#dcfce7;color:#166534}
+.sum-absent{background:#fee2e2;color:#991b1b}
+.sum-leave{background:#ffedd5;color:#9a3412}
+
+.day-head{min-width:125px}
+.day-num{font-weight:900}
+.day-name{font-size:11px;color:#64748b;margin-top:3px}
+
+.cell{
+  min-height:110px;
+  border-radius:12px;
+  padding:7px;
+  font-weight:900;
+  line-height:1.3;
+}
+
+.cell-status{
+  font-size:10px;
+  margin-bottom:5px;
+}
+
+.cell-select,
+.cell-time-input{
+  width:100%;
+  padding:7px;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  font-size:11px;
+  font-weight:800;
+  margin-top:5px;
+  background:white;
+}
+
+.cell-save{
+  width:100%;
+  padding:7px;
+  border-radius:8px;
+  border:0;
+  background:#0891b2;
+  color:white;
+  font-size:11px;
+  font-weight:900;
+  margin-top:5px;
+  cursor:pointer;
+}
+
+.present-cell{background:#dcfce7;color:#166534}
+.absent-cell{background:#fee2e2;color:#991b1b}
+.leave-cell{background:#ffedd5;color:#9a3412}
+.pending-cell{background:#fef3c7;color:#92400e}
+.rejected-cell{background:#fce7f3;color:#9d174d}
+.weekoff-cell{background:#ede9fe;color:#5b21b6}
+
+.error{
+  display:none;
+  background:#fee2e2;
+  color:#991b1b;
+  border:1px solid #fecaca;
+  padding:14px;
+  border-radius:15px;
+  font-weight:800;
+  margin-bottom:15px;
+}
+
+.success{
+  display:none;
+  background:#dcfce7;
+  color:#166534;
+  border:1px solid #bbf7d0;
+  padding:14px;
+  border-radius:15px;
+  font-weight:800;
+  margin-bottom:15px;
+}
+
+@media(max-width:1100px){
+  .filters{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:900px){
+  body{padding:16px}
+  .filters{grid-template-columns:1fr}
+  .header h1{font-size:27px}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1><i class="fa-solid fa-chart-line"></i> Attendance Reports</h1>
+    <p>Admin can view and update employee attendance date-wise.</p>
+  </div>
+
+  <div class="stats">
+    <div class="card">
+      <i class="fa-solid fa-users total-icon"></i>
+      <h2 id="totalEmployees">0</h2>
+      <p>Total Employees</p>
+    </div>
+
+    <div class="card">
+      <i class="fa-solid fa-user-check present-icon"></i>
+      <h2 id="presentCount">0</h2>
+      <p>Total Present</p>
+    </div>
+
+    <div class="card">
+      <i class="fa-solid fa-user-xmark absent-icon"></i>
+      <h2 id="absentCount">0</h2>
+      <p>Total Absent</p>
+    </div>
+
+    <div class="card">
+      <i class="fa-solid fa-calendar-minus leave-icon"></i>
+      <h2 id="leaveCount">0</h2>
+      <p>Total Leave</p>
+    </div>
+  </div>
+
+  <div class="box">
+
+    <div id="errorMsg" class="error"></div>
+    <div id="successMsg" class="success"></div>
+
+    <div class="filters">
+      <div class="field">
+        <label>From Date</label>
+        <input type="date" id="fromDate" onchange="renderReport()">
+      </div>
+
+      <div class="field">
+        <label>To Date</label>
+        <input type="date" id="toDate" onchange="renderReport()">
+      </div>
+
+      <div class="field">
+        <label>Search Employee</label>
+        <input type="text" id="employeeSearch" placeholder="Search by name or ID" oninput="renderReport()">
+      </div>
+
+      <div class="field">
+        <label>Status Filter</label>
+        <select id="statusFilter" onchange="renderReport()">
+          <option value="">All Status</option>
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+          <option value="Leave">Leave</option>
+          <option value="Pending Leave">Pending Leave</option>
+          <option value="Rejected Leave">Rejected Leave</option>
+          <option value="Week Off">Week Off</option>
+        </select>
+      </div>
+
+      <button class="btn" onclick="setToday()">
+        <i class="fa-solid fa-calendar-day"></i> Today
+      </button>
+
+      <button class="btn" onclick="setThisMonth()">
+        <i class="fa-solid fa-calendar-days"></i> This Month
+      </button>
+
+      <button class="btn download" onclick="downloadExcel()">
+        <i class="fa-solid fa-file-excel"></i> Excel
+      </button>
+    </div>
+
+    <div class="note" id="rangeText">Loading report...</div>
+
+    <div class="table-wrap">
+      <table id="attendanceTable">
+        <thead id="tableHead"></thead>
+        <tbody id="reportTable">
+          <tr>
+            <td style="padding:30px;font-weight:700;color:#6b7280;">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="../google-sheet.js"></script>
+
+<script>
+let employeesData = [];
+let attendanceData = [];
+let currentReport = [];
+let dateRange = [];
+
+function formatDateISO(date){
+  return date.getFullYear() + "-" +
+    String(date.getMonth() + 1).padStart(2,"0") + "-" +
+    String(date.getDate()).padStart(2,"0");
+}
+
+function normalize(value){
+  return String(value || "").trim().toLowerCase();
+}
+
+function showError(message){
+  const box = document.getElementById("errorMsg");
+  box.innerText = message;
+  box.style.display = message ? "block" : "none";
+}
+
+function showSuccess(message){
+  const box = document.getElementById("successMsg");
+  box.innerText = message;
+  box.style.display = message ? "block" : "none";
+
+  if(message){
+    setTimeout(() => {
+      box.style.display = "none";
+    }, 2500);
+  }
+}
+
+function getDateRange(fromDate,toDate){
+  const dates = [];
+  const start = new Date(fromDate + "T00:00:00");
+  const end = new Date(toDate + "T00:00:00");
+
+  if(isNaN(start.getTime()) || isNaN(end.getTime()) || start > end){
+    return [];
+  }
+
+  for(let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)){
+    dates.push(formatDateISO(new Date(d)));
+  }
+
+  return dates;
+}
+
+function formatAttendanceTime(value){
+  if(!value) return "";
+
+  const text = String(value).trim();
+  if(!text) return "";
+
+  if(/^\d{1,2}:\d{2}(\s?[AP]M)?$/i.test(text)){
+    return text.toUpperCase();
+  }
+
+  const date = new Date(text);
+
+  if(!isNaN(date.getTime())){
+    return date.toLocaleTimeString("en-IN",{
+      hour:"2-digit",
+      minute:"2-digit",
+      hour12:true
+    }).toUpperCase();
+  }
+
+  return text;
+}
+
+function convertToInputTime(value){
+  if(!value) return "";
+
+  const text = String(value).trim();
+
+  if(/^\d{2}:\d{2}$/.test(text)){
+    return text;
+  }
+
+  const match = text.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/i);
+
+  if(match){
+    let hour = Number(match[1]);
+    const minute = match[2];
+    const ampm = match[3].toUpperCase();
+
+    if(ampm === "PM" && hour !== 12) hour += 12;
+    if(ampm === "AM" && hour === 12) hour = 0;
+
+    return String(hour).padStart(2,"0") + ":" + minute;
+  }
+
+  return "";
+}
+
+function formatInputTimeToDisplay(time){
+  if(!time) return "";
+
+  const parts = time.split(":");
+  let hour = Number(parts[0]);
+  const minute = parts[1];
+
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+
+  return String(hour).padStart(2,"0") + ":" + minute + " " + ampm;
+}
+
+function getStatusFromValue(value){
+  const text = String(value || "").trim();
+  const lower = normalize(text);
+
+  if(!text) return "Absent";
+
+  if(lower === "leave") return "Leave";
+  if(lower === "pending leave") return "Pending Leave";
+  if(lower === "rejected leave") return "Rejected Leave";
+  if(lower === "week off" || lower === "weekoff" || lower === "weekly off") return "Week Off";
+  if(lower === "absent") return "Absent";
+
+  return "Present";
+}
+
+function getCellClass(status){
+  if(status === "Present") return "present-cell";
+  if(status === "Absent") return "absent-cell";
+  if(status === "Leave") return "leave-cell";
+  if(status === "Pending Leave") return "pending-cell";
+  if(status === "Rejected Leave") return "rejected-cell";
+  if(status === "Week Off") return "weekoff-cell";
+  return "";
+}
+
+function getDisplayValue(rawValue,status){
+  if(status === "Present") return formatAttendanceTime(rawValue);
+  if(status === "Absent") return "-";
+  if(status === "Leave") return "Leave";
+  if(status === "Pending Leave") return "Pending";
+  if(status === "Rejected Leave") return "Rejected";
+  if(status === "Week Off") return "Week Off";
+  return rawValue || "-";
+}
+
+function calculateEmployeeSummary(days){
+  let present = 0;
+  let absent = 0;
+  let leave = 0;
+
+  days.forEach(day => {
+    if(day.status === "Present") present++;
+    if(day.status === "Absent") absent++;
+
+    if(
+      day.status === "Leave" ||
+      day.status === "Pending Leave" ||
+      day.status === "Rejected Leave"
+    ){
+      leave++;
+    }
+  });
+
+  return { present, absent, leave };
+}
+
+function setToday(){
+  const today = new Date();
+  const todayISO = formatDateISO(today);
+
+  document.getElementById("fromDate").value = todayISO;
+  document.getElementById("toDate").value = todayISO;
+
+  renderReport();
+}
+
+function setThisMonth(){
+  const today = new Date();
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  const last = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+  document.getElementById("fromDate").value = formatDateISO(first);
+  document.getElementById("toDate").value = formatDateISO(last);
+
+  renderReport();
+}
+
+async function loadData(){
+  showError("");
+  showSuccess("");
+
+  try{
+    const empResult = await getFromGoogleSheet("getEmployees");
+    const attResult = await getFromGoogleSheet("getAttendance");
+
+    employeesData = empResult.success && Array.isArray(empResult.data)
+      ? empResult.data
+      : [];
+
+    attendanceData = attResult.success && Array.isArray(attResult.data)
+      ? attResult.data
+      : [];
+
+    setToday();
+
+  }catch(error){
+    console.log(error);
+    showError("Failed to load attendance data from sheet.");
+  }
+}
+
+function getAllReportEmployees(){
+  const map = new Map();
+
+  attendanceData.forEach(row => {
+    const employeeId = String(row.employeeId || "").trim();
+    if(!employeeId) return;
+
+    map.set(employeeId, {
+      employeeId,
+      name: row.name || "-",
+      department: row.department || "-",
+      designation: row.designation || "-",
+      attendanceRow: row
+    });
+  });
+
+  employeesData.forEach(emp => {
+    const employeeId = String(emp.employeeId || "").trim();
+    if(!employeeId) return;
+
+    const old = map.get(employeeId) || {};
+
+    map.set(employeeId, {
+      employeeId,
+      name: emp.fullName || emp.name || old.name || "-",
+      department: emp.department || old.department || "-",
+      designation: emp.designation || old.designation || "-",
+      attendanceRow: old.attendanceRow || null
+    });
+  });
+
+  return Array.from(map.values());
+}
+
+function updateTodayStats(allEmployees){
+  const todayISO = formatDateISO(new Date());
+
+  let todayPresent = 0;
+  let todayAbsent = 0;
+  let todayLeave = 0;
+
+  allEmployees.forEach(emp => {
+    const attendanceRow = emp.attendanceRow;
+    const rawValue = attendanceRow ? String(attendanceRow[todayISO] || "").trim() : "";
+    const status = getStatusFromValue(rawValue);
+
+    if(status === "Present") todayPresent++;
+    if(status === "Absent") todayAbsent++;
+
+    if(
+      status === "Leave" ||
+      status === "Pending Leave" ||
+      status === "Rejected Leave"
+    ){
+      todayLeave++;
+    }
+  });
+
+  document.getElementById("totalEmployees").innerText = allEmployees.length;
+  document.getElementById("presentCount").innerText = todayPresent;
+  document.getElementById("absentCount").innerText = todayAbsent;
+  document.getElementById("leaveCount").innerText = todayLeave;
+}
+
+function toggleTimeInput(employeeId,date){
+  const status = document.getElementById(`status-${employeeId}-${date}`).value;
+  const timeInput = document.getElementById(`time-${employeeId}-${date}`);
+
+  if(status === "Present"){
+    timeInput.style.display = "block";
+
+    if(!timeInput.value){
+      const now = new Date();
+      timeInput.value =
+        String(now.getHours()).padStart(2,"0") + ":" +
+        String(now.getMinutes()).padStart(2,"0");
+    }
+  }else{
+    timeInput.style.display = "none";
+    timeInput.value = "";
+  }
+}
+
+async function saveCalendarAttendance(employeeId,date){
+  showError("");
+  showSuccess("");
+
+  const statusEl = document.getElementById(`status-${employeeId}-${date}`);
+  const timeEl = document.getElementById(`time-${employeeId}-${date}`);
+
+  const status = statusEl.value;
+  const time = timeEl.value;
+
+  if(status === "Present" && !time){
+    showError("Please select attendance time for Present status.");
+    return;
+  }
+
+  const finalValue = status === "Present"
+    ? formatInputTimeToDisplay(time)
+    : status;
+
+  try{
+    const result = await saveToGoogleSheet({
+      action:"updateAdminAttendance",
+      employeeId:employeeId,
+      date:date,
+      value:finalValue
+    });
+
+    if(!result.success){
+      showError(result.message || "Failed to update attendance.");
+      return;
+    }
+
+    let row = attendanceData.find(r =>
+      String(r.employeeId || "").trim() === employeeId
+    );
+
+    const emp = employeesData.find(e =>
+      String(e.employeeId || "").trim() === employeeId
+    );
+
+    if(row){
+      row[date] = finalValue;
+      row.name = row.name || emp?.fullName || emp?.name || "";
+      row.department = row.department || emp?.department || "";
+      row.designation = row.designation || emp?.designation || "";
+    }else{
+      attendanceData.push({
+        employeeId:employeeId,
+        name:emp?.fullName || emp?.name || "",
+        department:emp?.department || "",
+        designation:emp?.designation || "",
+        [date]:finalValue
+      });
+    }
+
+    showSuccess("Attendance updated successfully.");
+    renderReport();
+
+  }catch(error){
+    console.log(error);
+    showError("Failed to save attendance.");
+  }
+}
+
+function renderReport(){
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+  const employeeSearch = normalize(document.getElementById("employeeSearch").value);
+  const statusFilter = document.getElementById("statusFilter").value;
+
+  const tableHead = document.getElementById("tableHead");
+  const tableBody = document.getElementById("reportTable");
+
+  dateRange = getDateRange(fromDate,toDate);
+
+  if(!dateRange.length){
+    showError("Please select a valid date range.");
+    return;
+  }
+
+  showError("");
+
+  const allEmployees = getAllReportEmployees();
+
+  updateTodayStats(allEmployees);
+
+  currentReport = allEmployees.map(emp => {
+    const attendanceRow = emp.attendanceRow;
+
+    const days = dateRange.map(date => {
+      const rawValue = attendanceRow ? String(attendanceRow[date] || "").trim() : "";
+      const status = getStatusFromValue(rawValue);
+      const displayValue = getDisplayValue(rawValue,status);
+
+      return {
+        date,
+        rawValue,
+        status,
+        display: displayValue
+      };
+    });
+
+    const summary = calculateEmployeeSummary(days);
+
+    return {
+      employeeId: emp.employeeId,
+      name: emp.name,
+      department: emp.department,
+      designation: emp.designation,
+      days,
+      summary
+    };
+  });
+
+  if(employeeSearch){
+    currentReport = currentReport.filter(emp =>
+      normalize(emp.name).includes(employeeSearch) ||
+      normalize(emp.employeeId).includes(employeeSearch)
+    );
+  }
+
+  if(statusFilter){
+    currentReport = currentReport
+      .map(emp => {
+        const filteredDays = emp.days.filter(day => day.status === statusFilter);
+        return {
+          ...emp,
+          days: filteredDays,
+          summary: calculateEmployeeSummary(filteredDays)
+        };
+      })
+      .filter(emp => emp.days.length);
+  }
+
+  document.getElementById("rangeText").innerText =
+    "Showing attendance from " + fromDate + " to " + toDate +
+    " (" + dateRange.length + " days) | Employees in table: " + currentReport.length +
+    " | Top cards show today's status only";
+
+  tableHead.innerHTML = `
+    <tr>
+      <th class="fixed-col">Employee</th>
+      ${
+        dateRange.map(date => {
+          const d = new Date(date + "T00:00:00");
+          return `
+            <th class="day-head">
+              <div class="day-num">${String(d.getDate()).padStart(2,"0")}</div>
+              <div class="day-name">${d.toLocaleDateString("en-IN",{weekday:"short"})}</div>
+            </th>
+          `;
+        }).join("")
+      }
+    </tr>
+  `;
+
+  if(!currentReport.length){
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="${dateRange.length + 1}" style="text-align:center;padding:30px;color:#6b7280;font-weight:700;">
+          No attendance records found
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = currentReport.map(emp => {
+    const dayCells = dateRange.map(date => {
+      const day = emp.days.find(d => d.date === date);
+
+      if(!day){
+        return `<td>-</td>`;
+      }
+
+      const timeValue = day.status === "Present" ? convertToInputTime(day.rawValue) : "";
+
+      return `
+        <td>
+          <div class="cell ${getCellClass(day.status)}">
+            <div class="cell-status">${day.display} - ${day.status}</div>
+
+            <select class="cell-select" id="status-${emp.employeeId}-${date}" onchange="toggleTimeInput('${emp.employeeId}','${date}')">
+              <option value="Present" ${day.status === "Present" ? "selected" : ""}>Present</option>
+              <option value="Absent" ${day.status === "Absent" ? "selected" : ""}>Absent</option>
+              <option value="Leave" ${day.status === "Leave" ? "selected" : ""}>Leave</option>
+              <option value="Pending Leave" ${day.status === "Pending Leave" ? "selected" : ""}>Pending Leave</option>
+              <option value="Rejected Leave" ${day.status === "Rejected Leave" ? "selected" : ""}>Rejected Leave</option>
+              <option value="Week Off" ${day.status === "Week Off" ? "selected" : ""}>Week Off</option>
+            </select>
+
+            <input 
+              type="time" 
+              class="cell-time-input" 
+              id="time-${emp.employeeId}-${date}" 
+              value="${timeValue}"
+              style="${day.status === "Present" ? "" : "display:none"}"
+            >
+
+            <button class="cell-save" onclick="saveCalendarAttendance('${emp.employeeId}','${date}')">
+              Save
+            </button>
+          </div>
+        </td>
+      `;
+    }).join("");
+
+    return `
+      <tr>
+        <td class="fixed-col">
+          <div class="emp-name">${emp.name}</div>
+          <div class="emp-meta">${emp.employeeId}</div>
+          <div class="emp-meta">${emp.department} • ${emp.designation}</div>
+
+          <div class="emp-summary">
+            <span class="sum-present">P: ${emp.summary.present}</span>
+            <span class="sum-absent">A: ${emp.summary.absent}</span>
+            <span class="sum-leave">L: ${emp.summary.leave}</span>
+          </div>
+        </td>
+        ${dayCells}
+      </tr>
+    `;
+  }).join("");
+}
+
+function downloadExcel(){
+  if(!currentReport.length || !dateRange.length){
+    showError("No data available to download.");
+    return;
+  }
+
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
+
+  let html = `
+    <table border="1">
+      <tr>
+        <th>Employee ID</th>
+        <th>Name</th>
+        <th>Department</th>
+        <th>Designation</th>
+        ${dateRange.map(date => `<th>${date}</th>`).join("")}
+        <th>Total Present</th>
+        <th>Total Absent</th>
+        <th>Total Leave</th>
+      </tr>
+  `;
+
+  currentReport.forEach(emp => {
+    html += `
+      <tr>
+        <td>${emp.employeeId}</td>
+        <td>${emp.name}</td>
+        <td>${emp.department}</td>
+        <td>${emp.designation}</td>
+        ${
+          dateRange.map(date => {
+            const day = emp.days.find(d => d.date === date);
+            return `<td>${day ? day.display + " - " + day.status : "-"}</td>`;
+          }).join("")
+        }
+        <td>${emp.summary.present}</td>
+        <td>${emp.summary.absent}</td>
+        <td>${emp.summary.leave}</td>
+      </tr>
+    `;
+  });
+
+  html += `</table>`;
+
+  const blob = new Blob([html], {
+    type:"application/vnd.ms-excel"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = "attendance-report-" + fromDate + "-to-" + toDate + ".xls";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
+loadData();
+</script>
+
+</body>
+</html>
